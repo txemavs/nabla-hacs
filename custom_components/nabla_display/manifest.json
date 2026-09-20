@@ -1,0 +1,16 @@
+{
+  "domain": "nabla_display",
+  "name": "Nabla Display Mirror",
+  "version": "0.1.0",
+  "documentation": "https://github.com/txemavs/nabla-hacs",
+  "codeowners": [
+    "@txemavs"
+  ],
+  "dependencies": [
+    "http"
+  ],
+  "iot_class": "local_polling",
+  "requirements": [
+    "Pillow>=10.0.0"
+  ]
+}
