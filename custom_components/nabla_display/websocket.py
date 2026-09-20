@@ -46,7 +46,7 @@ def websocket_get_devices(
             "format": device.format,
             "has_input": device.has_input,
             "poll_interval": device.poll_interval,
-            "capabilities_from_fallback": device.capabilities_from_fallback,
+            "capabilities_from_fallback": getattr(device, "capabilities_from_fallback", False),
         })
 
     connection.send_result(msg["id"], devices)
