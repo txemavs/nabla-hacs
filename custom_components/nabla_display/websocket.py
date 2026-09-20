@@ -9,7 +9,7 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
-from . import DOMAIN
+DOMAIN = "nabla_display"
 
 _LOGGER = logging.getLogger(__name__)
 
