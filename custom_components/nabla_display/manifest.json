@@ -1,13 +1,16 @@
 {
   "domain": "nabla_display",
-  "name": "Nabla Display Mirror",
-  "version": "0.1.0",
+  "name": "Nabla Display",
+  "version": "0.2.0",
   "documentation": "https://github.com/txemavs/nabla-hacs",
   "codeowners": [
     "@txemavs"
   ],
   "dependencies": [
-    "http"
+    "http",
+    "frontend",
+    "panel_custom",
+    "lovelace"
   ],
   "iot_class": "local_polling",
   "requirements": [

@@ -1,21 +1,24 @@
-# Home Assistant custom component for Nabla Display mirror.
+# Home Assistant custom component for Nabla Display.
 # Polls ESP devices for display frames and exposes encoder actions.
 # See docs/platform/DISPLAY-MIRROR-CONTRACT.md for the HTTP contract.
 
 import asyncio
 import logging
+import os
 import time
 
 import aiohttp
 import voluptuous as vol
 
-from homeassistant.components.http import HomeAssistantView
+from homeassistant.components import panel_custom
+from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv, discovery
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .frame import decode_frame, image_to_png_bytes, infer_profile_from_size
+from .websocket import async_register_websocket_handlers
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -254,6 +257,37 @@ class DeviceState:
             self.poll_task = None
 
 
+PANEL_TITLE = "Nabla Displays"
+PANEL_ICON = "mdi:monitor"
+PANEL_URL_PATH = "nabla-displays"
+PANEL_FRONTEND_URL = f"/{DOMAIN}_panel"
+
+
+async def async_register_panel(hass: HomeAssistant) -> None:
+    """Register the sidebar panel for device management."""
+    # Get path to frontend directory
+    frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
+
+    # Register static path for the panel files
+    await hass.http.async_register_static_paths([
+        StaticPathConfig(PANEL_FRONTEND_URL, frontend_path, cache_headers=False)
+    ])
+
+    # Register the custom panel
+    await panel_custom.async_register_panel(
+        hass,
+        webcomponent_name="nabla-panel",
+        frontend_url_path=PANEL_URL_PATH,
+        sidebar_title=PANEL_TITLE,
+        sidebar_icon=PANEL_ICON,
+        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js",
+        embed_iframe=False,
+        require_admin=False,
+    )
+
+    _LOGGER.debug("Nabla Display panel registered at /%s", PANEL_URL_PATH)
+
+
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the Nabla Display integration."""
     conf = config.get(DOMAIN)
@@ -275,6 +309,12 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     hass.data[DOMAIN] = {"devices": devices}
 
     hass.http.register_view(FrameImageView(devices))
+
+    # Register WebSocket handlers
+    async_register_websocket_handlers(hass)
+
+    # Register the management panel
+    await async_register_panel(hass)
 
     async def handle_send_action(call: ServiceCall):
         """Handle nabla_display.send_action service call."""
