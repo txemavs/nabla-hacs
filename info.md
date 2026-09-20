@@ -7,6 +7,8 @@ View and control Nabla ESP-UI display mirrors in Home Assistant.
 - Live display mirroring from ESP devices
 - Encoder control buttons (up/down/enter/back)
 - Lovelace card with pixelated rendering
+- **Management panel** in the sidebar to view all devices
+- **Add to dashboard** — assign cards to any Lovelace dashboard with one click
 - Service for automation integration
 - Fallback profile detection for legacy firmware
 
@@ -20,8 +22,10 @@ nabla_display:
       name: "My Display"
 ```
 
+After restart, open **Nabla Displays** from the sidebar to see your devices and add cards to dashboards.
+
 ```yaml
-# Lovelace card
+# Manual Lovelace card
 type: custom:nabla-display-card
 device_id: "10_10_10_204"
 ```
