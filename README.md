@@ -1,6 +1,21 @@
-# Nabla Display for Home Assistant
+# Nabla for Home Assistant
 
-Home Assistant custom integration for viewing Nabla ESP-UI display mirrors and sending encoder actions.
+HACS integration repository for Nabla projects. Today it ships **Nabla Display**; additional integrations may be added here as the Nabla ecosystem grows.
+
+---
+
+## Nabla Display
+
+**Nabla ESP-UI** is firmware and a UI layer for ESP32 devices with screens — menu system, rotary encoder input, display mirroring, and network integration (Nabla Net, Home Assistant, etc.). It runs on boards like LILYGO T-Call, T-Watch, and various ST7735/SSD1309-based kits.
+
+**Nabla Display** (`nabla_display`) brings those device screens into Home Assistant:
+
+- **Live display mirror** — see the ESP screen in a Lovelace card, updated via polling
+- **Encoder actions** — send up/down/enter/back commands from HA buttons or automations
+
+This is useful for monitoring device state, remote control, and building dashboards that include your ESP-UI screens.
+
+---
 
 ## Installation via HACS
 
