@@ -4,7 +4,71 @@ import "./cameras.js?v=20260921cameras1";
 // Sidebar listing configured Control devices (mirror displays, Nabla web UI, cameras)
 // with live preview and dashboard assignment.
 
+
+NablaPanel.I18N = {
+  en: {
+    configure: "Configure",
+    refresh: "Refresh",
+    help: "Help",
+    tab_devices: "Devices",
+    tab_cameras: "Cameras",
+    tab_mqtt: "MQTT",
+    search_devices: "Search devices…",
+    view_screens: "Screens",
+    view_details: "Details",
+    status: "Status",
+    status_all: "All",
+    status_online: "Online",
+    status_offline: "Offline",
+    discover: "Find new",
+    add_device: "Add device",
+    live_view: "Live view",
+    help_title: "About Nabla Control",
+    help_close: "Close",
+    help_lead: "Nabla is a compact operating environment for microcontrollers with a screen — menus, navigation and local UI that run on the device.",
+    help_body: "Device firmware and on-device UI come from Nabla ESP UI. This Home Assistant integration — Nabla Control — discovers those devices, shows live previews, relays encoder or touch input, and can proxy camera thumbnails for small displays.",
+    help_link: "Nabla ESP UI on GitHub",
+    help_note: "Each device keeps its own on-screen language. This panel follows your Home Assistant language.",
+  },
+  es: {
+    configure: "Configurar",
+    refresh: "Actualizar",
+    help: "Ayuda",
+    tab_devices: "Dispositivos",
+    tab_cameras: "Cámaras",
+    tab_mqtt: "MQTT",
+    search_devices: "Buscar dispositivos…",
+    view_screens: "Pantallas",
+    view_details: "Detalles",
+    status: "Estado",
+    status_all: "Todos",
+    status_online: "Conectados",
+    status_offline: "Desconectados",
+    discover: "Buscar nuevos",
+    add_device: "Añadir dispositivo",
+    live_view: "Vista en vivo",
+    help_title: "Acerca de Nabla Control",
+    help_close: "Cerrar",
+    help_lead: "Nabla es un entorno operativo compacto para microcontroladores con pantalla: menús, navegación e interfaz local que corren en el propio dispositivo.",
+    help_body: "El firmware y la interfaz en el aparato vienen de Nabla ESP UI. Esta integración de Home Assistant — Nabla Control — descubre esos dispositivos, muestra previsualizaciones en vivo, reenvía el encoder o el tacto, y puede hacer de proxy de miniaturas de cámara para pantallas pequeñas.",
+    help_link: "Nabla ESP UI en GitHub",
+    help_note: "Cada dispositivo mantiene el idioma de su propia pantalla. Este panel sigue el idioma de Home Assistant.",
+  },
+};
+
 class NablaPanel extends HTMLElement {
+
+  _lang() {
+    const raw = (this._hass?.locale?.language || this._hass?.language || "en").toLowerCase();
+    return raw.startsWith("es") ? "es" : "en";
+  }
+
+  _t(key) {
+    const pack = NablaPanel.I18N[this._lang()] || NablaPanel.I18N.en;
+    return pack[key] || NablaPanel.I18N.en[key] || key;
+  }
+
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -574,29 +638,33 @@ class NablaPanel extends HTMLElement {
             Nabla Control
           </h1>
 
-          <a class="refresh-btn" href="/config/integrations/integration/nabla_control">Configurar</a>
+          <a class="refresh-btn" href="/config/integrations/integration/nabla_control">${this._t("configure")}</a>
+          <button class="refresh-btn" id="help-btn" type="button" title="${this._t("help")}">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M11,18H13V16H11V18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,6A4,4 0 0,0 8,10H10A2,2 0 0,1 12,8A2,2 0 0,1 14,10C14,12 11,11.75 11,15H13C13,12.75 16,12.5 16,10A4,4 0 0,0 12,6Z"/></svg>
+            ${this._t("help")}
+          </button>
           <button class="refresh-btn" id="refresh-btn">
             <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/></svg>
-            Actualizar
+            ${this._t("refresh")}
           </button>
         </div>
         <nav class="tabs" role="tablist" aria-label="Nabla Control">
-          <button id="tab-devices" data-tab="devices" role="tab" aria-controls="devices-panel" aria-selected="true">Dispositivos</button>
-          <button id="tab-cameras" data-tab="cameras" role="tab" aria-controls="cameras-panel" aria-selected="false">Cámaras</button>
-          <button id="tab-mqtt" data-tab="mqtt" role="tab" aria-controls="mqtt-panel" aria-selected="false">MQTT</button>
+          <button id="tab-devices" data-tab="devices" role="tab" aria-controls="devices-panel" aria-selected="true">${this._t("tab_devices")}</button>
+          <button id="tab-cameras" data-tab="cameras" role="tab" aria-controls="cameras-panel" aria-selected="false">${this._t("tab_cameras")}</button>
+          <button id="tab-mqtt" data-tab="mqtt" role="tab" aria-controls="mqtt-panel" aria-selected="false">${this._t("tab_mqtt")}</button>
         </nav>
         <section id="cameras-panel" role="tabpanel" aria-labelledby="tab-cameras" hidden><nabla-cameras></nabla-cameras></section>
         <section id="mqtt-panel" role="tabpanel" aria-labelledby="tab-mqtt" hidden><nabla-mqtt-log></nabla-mqtt-log></section>
         <section id="devices-panel" role="tabpanel" aria-labelledby="tab-devices">
         <div class="device-toolbar">
-          <label class="device-search"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M9.5 3a6.5 6.5 0 1 0 4 11.6L19.9 21l1.4-1.4-6.4-6.4A6.5 6.5 0 0 0 9.5 3m0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9"/></svg><input id="device-search" type="search" placeholder="Buscar dispositivos…" aria-label="Buscar dispositivos"></label>
-          <div class="view-toggle" aria-label="Vista de dispositivos">
-            <button data-view="screens" aria-pressed="false" title="Pantallas"><span aria-hidden="true">▦</span> Pantallas</button>
-            <button data-view="details" aria-pressed="true" title="Tabla de detalles"><span aria-hidden="true">☷</span> Detalles</button>
+          <label class="device-search"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M9.5 3a6.5 6.5 0 1 0 4 11.6L19.9 21l1.4-1.4-6.4-6.4A6.5 6.5 0 0 0 9.5 3m0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9"/></svg><input id="device-search" type="search" placeholder="${this._t("search_devices")}" aria-label="${this._t("search_devices")}"></label>
+          <div class="view-toggle" aria-label="${this._t("tab_devices")}">
+            <button data-view="screens" aria-pressed="false" title="${this._t("view_screens")}"><span aria-hidden="true">▦</span> ${this._t("view_screens")}</button>
+            <button data-view="details" aria-pressed="true" title="${this._t("view_details")}"><span aria-hidden="true">☷</span> ${this._t("view_details")}</button>
           </div>
-          <label class="status-filter">Estado <select id="device-status"><option value="all">Todos</option><option value="online">Conectados</option><option value="offline">Desconectados</option></select></label>
-          <button class="refresh-btn" id="discover-devices">Buscar nuevos</button>
-          <a class="refresh-btn add-device" href="/config/integrations/integration/nabla_control"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg> Añadir dispositivo</a>
+          <label class="status-filter">${this._t("status")} <select id="device-status"><option value="all">${this._t("status_all")}</option><option value="online">${this._t("status_online")}</option><option value="offline">${this._t("status_offline")}</option></select></label>
+          <button class="refresh-btn" id="discover-devices">${this._t("discover")}</button>
+          <a class="refresh-btn add-device" href="/config/integrations/integration/nabla_control"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg> ${this._t("add_device")}</a>
         </div>
         <section id="discovery-results" aria-label="Dispositivos encontrados" hidden></section>
         <p id="device-count" class="device-count" role="status"></p>
@@ -610,7 +678,7 @@ class NablaPanel extends HTMLElement {
       <div class="modal-overlay" id="live-modal">
         <div class="modal">
           <div class="modal-header">
-            <h2 id="live-modal-title">Live View</h2>
+            <h2 id="live-modal-title">${this._t("live_view")}</h2>
             <button class="modal-close" id="live-modal-close">&times;</button>
           </div>
           <div class="modal-body">
@@ -632,6 +700,26 @@ class NablaPanel extends HTMLElement {
               </div>
               <div class="live-info" id="live-info"></div>
             </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Help modal -->
+      <div class="modal-overlay" id="help-modal">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+          <div class="modal-header">
+            <h2 id="help-modal-title">${this._t("help_title")}</h2>
+            <button class="modal-close" id="help-modal-close" type="button" title="${this._t("help_close")}">&times;</button>
+          </div>
+          <div class="modal-body" style="line-height:1.55;max-width:36rem">
+            <p style="margin-top:0;font-size:15px">${this._t("help_lead")}</p>
+            <p>${this._t("help_body")}</p>
+            <p><a href="https://github.com/txemavs/nabla-esp-ui" target="_blank" rel="noopener noreferrer">${this._t("help_link")}</a></p>
+            <p style="opacity:.8;font-size:13px;margin-bottom:0">${this._t("help_note")}</p>
+          </div>
+          <div class="modal-footer">
+            <button class="action-btn primary" id="help-modal-done" type="button">${this._t("help_close")}</button>
           </div>
         </div>
       </div>
@@ -688,6 +776,16 @@ class NablaPanel extends HTMLElement {
       this.shadowRoot.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
       this._renderDeviceList();
     });
+    // Help
+    const openHelp = () => this.shadowRoot.getElementById("help-modal").classList.add("active");
+    const closeHelp = () => this.shadowRoot.getElementById("help-modal").classList.remove("active");
+    this.shadowRoot.getElementById("help-btn").addEventListener("click", openHelp);
+    this.shadowRoot.getElementById("help-modal-close").addEventListener("click", closeHelp);
+    this.shadowRoot.getElementById("help-modal-done").addEventListener("click", closeHelp);
+    this.shadowRoot.getElementById("help-modal").addEventListener("click", (e) => {
+      if (e.target.id === "help-modal") closeHelp();
+    });
+
     // Refresh button
     this.shadowRoot.getElementById("refresh-btn").addEventListener("click", () => {
       this._loadData();
