@@ -75,3 +75,16 @@ class SubscriptionTests(unittest.IsolatedAsyncioTestCase):
         self.remove.assert_called_once();self.assertFalse(self.m.buffer.rows)
 
 if __name__=='__main__':unittest.main()
+
+class AuthorizationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_non_admin_cannot_read_or_modify(self):
+        path=p.with_name('websocket.py')
+        module=ast.parse(path.read_text())
+        handler=next(n for n in module.body if getattr(n,'name',None)=='websocket_mqtt_log')
+        handler.decorator_list=[]
+        scope={'DOMAIN':'nabla_control'}
+        exec(compile(ast.Module(body=[handler],type_ignores=[]),str(path),'exec'),scope)
+        connection=NS(require_admin=Mock(side_effect=PermissionError('admin required')))
+        for operation in ['get','configure','clear']:
+            with self.assertRaises(PermissionError):
+                await scope['websocket_mqtt_log'](None,connection,{'operation':operation})
