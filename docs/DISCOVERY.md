@@ -51,3 +51,10 @@ Pending separately:
 - Drag/held-input support beyond the optional [short remote taps](REMOTE-TOUCH.md).
 
 The optional MQTT log remains a viewer, not a discovery or command transport.
+
+## Across Wi-Fi networks with MQTT
+
+[MQTT identity discovery](MQTT-DISCOVERY.md) is an independent opt-in path for
+firmware that announces itself. It verifies identity before following a new IP,
+including devices not listed in HA's ESPHome integration. A linked MQTT source
+has priority over the ESPHome source to avoid competing address updates.

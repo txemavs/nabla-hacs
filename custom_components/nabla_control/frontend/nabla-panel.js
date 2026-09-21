@@ -1,3 +1,4 @@
+import "./mqtt-presence.js?v=20260921presence1";
 import "./mqtt-log.js?v=20260921cameras1";
 import "./cameras.js?v=20260921cameras1";
 // Nabla Control panel for Home Assistant (domain: nabla_control)
@@ -5,7 +6,7 @@ import "./cameras.js?v=20260921cameras1";
 // with live preview and dashboard assignment.
 
 
-NablaPanel.I18N = {
+const NABLA_PANEL_I18N = {
   en: {
     configure: "Configure",
     refresh: "Refresh",
@@ -64,8 +65,8 @@ class NablaPanel extends HTMLElement {
   }
 
   _t(key) {
-    const pack = NablaPanel.I18N[this._lang()] || NablaPanel.I18N.en;
-    return pack[key] || NablaPanel.I18N.en[key] || key;
+    const pack = NABLA_PANEL_I18N[this._lang()] || NABLA_PANEL_I18N.en;
+    return pack[key] || NABLA_PANEL_I18N.en[key] || key;
   }
 
 
@@ -87,6 +88,8 @@ class NablaPanel extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    const presence = this.shadowRoot.querySelector("nabla-mqtt-presence");
+    if (presence) presence.hass = this._hass;
     const monitor = this.shadowRoot.querySelector("nabla-mqtt-log");
     if (monitor) monitor.hass = hass;
     const cameras = this.shadowRoot.querySelector("nabla-cameras");
@@ -654,7 +657,7 @@ class NablaPanel extends HTMLElement {
           <button id="tab-mqtt" data-tab="mqtt" role="tab" aria-controls="mqtt-panel" aria-selected="false">${this._t("tab_mqtt")}</button>
         </nav>
         <section id="cameras-panel" role="tabpanel" aria-labelledby="tab-cameras" hidden><nabla-cameras></nabla-cameras></section>
-        <section id="mqtt-panel" role="tabpanel" aria-labelledby="tab-mqtt" hidden><nabla-mqtt-log></nabla-mqtt-log></section>
+        <section id="mqtt-panel" role="tabpanel" aria-labelledby="tab-mqtt" hidden><nabla-mqtt-presence></nabla-mqtt-presence><nabla-mqtt-log></nabla-mqtt-log></section>
         <section id="devices-panel" role="tabpanel" aria-labelledby="tab-devices">
         <div class="device-toolbar">
           <label class="device-search"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M9.5 3a6.5 6.5 0 1 0 4 11.6L19.9 21l1.4-1.4-6.4-6.4A6.5 6.5 0 0 0 9.5 3m0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9"/></svg><input id="device-search" type="search" placeholder="${this._t("search_devices")}" aria-label="${this._t("search_devices")}"></label>
@@ -761,6 +764,7 @@ class NablaPanel extends HTMLElement {
     `;
 
     this.shadowRoot.querySelector("nabla-mqtt-log").hass = this._hass;
+    this.shadowRoot.querySelector("nabla-mqtt-presence").hass = this._hass;
     this.shadowRoot.querySelector("nabla-cameras").hass = this._hass;
     this._setupEventListeners();
   }
@@ -869,6 +873,8 @@ class NablaPanel extends HTMLElement {
     this.shadowRoot.querySelector('nabla-cameras').active=tab==='cameras';
     const mqtt=this.shadowRoot.querySelector('nabla-mqtt-log');
     if(tab==='mqtt')mqtt.open();else mqtt.close();
+    const presence=this.shadowRoot.querySelector('nabla-mqtt-presence');
+    if(tab==='mqtt')presence.open();else presence.close();
     this._renderDeviceList();
   }
 

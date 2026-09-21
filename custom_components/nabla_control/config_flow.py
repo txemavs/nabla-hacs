@@ -17,6 +17,7 @@ def schema(data):
         vol.Required("host", default=data.get("host", "")): str,
         vol.Optional("name", default=data.get("name", "Nabla device")): str,
         vol.Optional("follow_source", default=data.get("follow_source", False)): bool,
+        vol.Optional("follow_mqtt", default=data.get("follow_mqtt", False)): bool,
         vol.Optional("kind", default=data.get("kind", "auto")): vol.In(["auto", "mirror", "web"]),
         vol.Optional("poll_interval", default=data.get("poll_interval", 1.0)):
             vol.All(vol.Coerce(float), vol.Range(min=0.2, max=30)),
@@ -66,6 +67,21 @@ class NablaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="device", data_schema=schema(user_input or {}), errors=errors)
 
     async def async_step_integration_discovery(self, discovery_info):
+        if "mqtt_identity" in discovery_info:
+            identity = discovery_info["mqtt_identity"]
+            manager = self.hass.data[DOMAIN]["mqtt_presence"]
+            row = manager.rows.get(identity)
+            kind = await manager.verify(row) if row else None
+            if not kind:
+                return self.async_abort(reason="cannot_connect")
+            await self.async_set_unique_id("mqtt:" + identity)
+            self._abort_if_unique_id_configured()
+            if duplicate_host(self.hass, row["host"]):
+                return self.async_abort(reason="already_configured")
+            return self.async_create_entry(title=row["name"], data={
+                "host": row["host"], "name": row["name"], "mqtt_identity": identity,
+                "device_id": uuid4().hex, "kind": kind, "poll_interval": 1.0,
+                "follow_mqtt": True, "follow_source": False})
         source_id = discovery_info["source_entry_id"]
         manager = self.hass.data[DOMAIN]["discovery"]
         source = manager.sources().get(source_id)

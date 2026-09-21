@@ -174,3 +174,9 @@ Run `python3 -m unittest discover -s tests -v`. The tests exercise production
 lifecycle and MQTT code through an isolated HA boundary; they are not a full
 Home Assistant/frontend suite. Keep physical, runtime and owner verification
 separate from unit test results.
+
+### MQTT address discovery
+
+Nabla Control can now [link MQTT device identities and follow verified IP
+changes](docs/MQTT-DISCOVERY.md), independently of the optional traffic log.
+Enable it in the MQTT tab and add `nabla_presence` to the device firmware.
