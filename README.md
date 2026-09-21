@@ -177,6 +177,78 @@ disabling and changing MQTT settings afterwards does not. Use Apply again if
 MQTT was unavailable during startup; ordinary broker reconnects use HA MQTT's
 existing subscriptions.
 
+## Troubleshooting
+
+### Device shows unavailable
+
+1. **Check network**: Verify the device IP is reachable from the Home Assistant host
+   (`ping <device-ip>`).
+2. **Verify endpoint**: Mirror devices must respond at `/mirror/capabilities` or
+   `/mirror/frame`; web devices at `/nabla/state`. Test with
+   `curl http://<device-ip>/mirror/capabilities` or `curl http://<device-ip>/nabla/state`.
+3. **Kind mismatch**: If configured as `mirror` but the device serves a Nabla web UI
+   (or vice versa), set the device type to `auto` or the correct value in options.
+4. **Firmware**: Ensure the ESP device runs compatible Nabla ESP UI firmware.
+
+### Encoder buttons do not work
+
+- The device must report `input: true` in capabilities. Fallback-probed devices
+  (no `/mirror/capabilities` but `/mirror/frame` works) disable input for safety.
+- Check the panel Live View: buttons are only available when the device shows
+  `has_input: true`.
+- Buttons raise errors in HA when the device rejects them (authentication, unavailable).
+
+### Camera Cache shows 503
+
+- Verify the source camera entity is available (`camera.<name>` in Developer Tools → States).
+- Only cameras explicitly configured in Camera Cache settings are served.
+- If the camera entity fails to provide an image, wait for retry or check camera
+  integration logs.
+
+### MQTT log shows "MQTT unavailable"
+
+- The MQTT integration must be configured and connected before enabling the Nabla MQTT
+  log. Check Settings → Devices & services → MQTT.
+- Press **Apply** in the MQTT log settings after MQTT becomes available.
+
+### Panel does not appear in sidebar
+
+- Restart Home Assistant after first install or upgrade. Panel registration
+  requires one restart.
+
+### Diagnostics
+
+Use **Settings → Devices & services → Nabla Control → (entry) → Download diagnostics**
+to export device state for debugging. Sensitive fields (host, URLs) are redacted.
+
+---
+
+## Removal / Uninstall
+
+### Remove a single device
+
+1. Go to **Settings → Devices & services → Nabla Control**.
+2. Click the three-dot menu on the device entry and select **Delete**.
+3. The device stops polling immediately; no restart is required.
+
+### Remove Camera Cache
+
+1. Go to **Settings → Devices & services → Nabla Control**.
+2. Click the three-dot menu on the **Camera Cache** entry and select **Delete**.
+3. Cached image routes become unavailable immediately.
+
+### Uninstall the integration completely
+
+1. Remove all device entries and the Camera Cache entry as described above.
+2. In HACS, find **Nabla Control** and select **Remove**.
+3. Restart Home Assistant.
+4. Optionally delete any remaining `custom_components/nabla_control/` directory.
+
+Removing the integration does not delete device history from the Recorder database.
+Dashboard cards referencing removed devices will show "Entity not available".
+
+---
+
 ## Verification
 
 Run `python3 -m unittest discover -s tests -v`. The tests exercise production
