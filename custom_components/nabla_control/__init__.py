@@ -14,6 +14,7 @@ from homeassistant.components import panel_custom, frontend
 from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -304,19 +305,29 @@ class DeviceState:
             return False
         return False
 
-    async def send_action(self, action: str) -> bool:
-        """Send encoder action to device. Returns True on success."""
+    async def send_action(self, action: str) -> None:
+        """Send encoder action to device. Raises on failure."""
         if self.kind == KIND_WEB:
-            _LOGGER.warning("Cannot send action to web device %s", self.name)
-            return False
-        if not self.has_input or not self.token:
-            _LOGGER.warning("Cannot send action to %s: no input or token", self.name)
-            return False
+            raise HomeAssistantError(
+                f"Cannot send action to web device {self.name}"
+            )
+        if not self.has_input:
+            raise HomeAssistantError(
+                f"Device {self.name} does not support encoder input"
+            )
+        if not self.token:
+            raise HomeAssistantError(
+                f"No authentication token available for {self.name}"
+            )
 
         valid_actions = ("up", "down", "enter", "back")
         if action not in valid_actions:
-            _LOGGER.warning("Invalid action '%s' for %s", action, self.name)
-            return False
+            raise ServiceValidationError(
+                f"Invalid action '{action}' for {self.name}",
+                translation_domain=DOMAIN,
+                translation_key="invalid_action",
+                translation_placeholders={"action": action, "device": self.name},
+            )
 
         try:
             url = f"http://{http_host(self.host)}/mirror/action"
@@ -328,15 +339,29 @@ class DeviceState:
             ) as resp:
                 if resp.status == 200:
                     _LOGGER.debug("Action %s sent to %s", action, self.name)
-                    return True
+                    return
                 if resp.status == 401:
                     _LOGGER.warning("Token rejected for %s, refetching", self.name)
-                    await self.fetch_token()
-                else:
-                    _LOGGER.warning("Action failed for %s: HTTP %d", self.name, resp.status)
+                    if await self.fetch_token():
+                        async with self.session.post(
+                            url, headers={"X-Nabla-Token": self.token}, data=data,
+                            timeout=aiohttp.ClientTimeout(total=5)
+                        ) as retry_resp:
+                            if retry_resp.status == 200:
+                                _LOGGER.debug("Action %s sent to %s after token refresh", action, self.name)
+                                return
+                    raise HomeAssistantError(
+                        f"Authentication failed for {self.name}"
+                    )
+                raise HomeAssistantError(
+                    f"Action failed for {self.name}: HTTP {resp.status}"
+                )
+        except HomeAssistantError:
+            raise
         except Exception as e:
-            _LOGGER.warning("Action failed for %s: %s", self.name, e)
-        return False
+            raise HomeAssistantError(
+                f"Action failed for {self.name}: {e}"
+            ) from e
 
     async def _discover_kind(self) -> bool:
         """Resolve device kind for auto / first connect. Returns True if ready."""
@@ -471,8 +496,12 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         action = call.data.get("action")
 
         if device_id not in devices:
-            _LOGGER.error("Unknown device: %s", device_id)
-            return
+            raise ServiceValidationError(
+                f"Unknown Nabla Control device: {device_id}",
+                translation_domain=DOMAIN,
+                translation_key="unknown_device",
+                translation_placeholders={"device_id": device_id},
+            )
 
         await devices[device_id].send_action(action)
 

@@ -1,5 +1,13 @@
 {
   "title": "Nabla Control",
+  "exceptions": {
+    "unknown_device": {
+      "message": "Unknown Nabla Control device: {device_id}"
+    },
+    "invalid_action": {
+      "message": "Invalid action '{action}' for {device}"
+    }
+  },
   "config": {
     "step": {
       "device": {
