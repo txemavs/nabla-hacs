@@ -22,6 +22,10 @@ devices, encoder actions, and the sidebar panel.
 - **Mirror displays** — live ESP screen preview and encoder actions (firmware from Nabla ESP UI)
 - **Nabla web UI** — devices that serve an HTML Nabla UI (`/nabla/state`), with an **Open Nabla** link
 - **Cameras** — when a web device reports `camera_port`, the panel shows a live MJPEG preview
+- **Camera cache (planned)** — low-res JPEG proxy (`view` / `icon`) for any Home Assistant
+  `camera.*` (including generic ESPHome / SCAM). Today that lives as a temporary standalone
+  integration (`nabla_camera_cache`); it will move into this package. See
+  [docs/CAMERA-CACHE.md](docs/CAMERA-CACHE.md).
 
 YAML / Python domain and product name: **Nabla Control** (`nabla_control`).
 
@@ -120,6 +124,7 @@ Service domain: `nabla_control` (e.g. `nabla_control.send_action`).
 ## Related projects
 
 - [Nabla ESP UI](https://github.com/txemavs/nabla-esp-ui) — on-device menus and mirror contract
+- [Camera cache adoption](docs/CAMERA-CACHE.md) — folding `nabla_camera_cache` into Nabla Control
 
 ---
 
