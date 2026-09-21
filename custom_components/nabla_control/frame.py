@@ -1,4 +1,4 @@
-# Frame decode utilities for Nabla Display mirror.
+# Frame decode utilities for Nabla Control mirror.
 # Converts raw RGB332/mono1 bytes from ESP devices to PIL images.
 # See docs/platform/DISPLAY-MIRROR-CONTRACT.md for byte layout spec.
 

@@ -1,8 +1,8 @@
-// Nabla Display Lovelace card for Home Assistant.
+// Nabla Control Lovelace card for Home Assistant.
 // Displays ESP device screen mirror with optional encoder controls.
 // Frame decoding happens server-side; this card just renders the PNG.
 
-class NablaDisplayCard extends HTMLElement {
+class NablaControlCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -20,9 +20,9 @@ class NablaDisplayCard extends HTMLElement {
       throw new Error("You need to define a device_id");
     }
     this._config = {
-      type: "custom:nabla-display-card",
+      type: "custom:nabla-control-card",
       device_id: config.device_id,
-      name: config.name || "Nabla Display",
+      name: config.name || "Nabla Control",
       poll_interval: config.poll_interval || 1000,
       scale: config.scale || 2,
       show_controls: config.show_controls !== false,
@@ -179,7 +179,7 @@ class NablaDisplayCard extends HTMLElement {
     if (!this._hass || !this._config) return;
 
     try {
-      await this._hass.callService("nabla_display", "send_action", {
+      await this._hass.callService("nabla_control", "send_action", {
         device_id: this._config.device_id,
         action: action,
       });
@@ -206,7 +206,7 @@ class NablaDisplayCard extends HTMLElement {
     const statusSpan = this.shadowRoot.querySelector(".status");
 
     try {
-      const url = `/api/nabla_display/${this._config.device_id}/frame`;
+      const url = `/api/nabla_control/${this._config.device_id}/frame`;
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${this._hass.auth.data.access_token}`,
@@ -276,14 +276,14 @@ class NablaDisplayCard extends HTMLElement {
   }
 
   static getConfigElement() {
-    return document.createElement("nabla-display-card-editor");
+    return document.createElement("nabla-control-card-editor");
   }
 
   static getStubConfig() {
     return {
-      type: "custom:nabla-display-card",
+      type: "custom:nabla-control-card",
       device_id: "",
-      name: "Nabla Display",
+      name: "Nabla Control",
       poll_interval: 1000,
       scale: 2,
       show_controls: true,
@@ -291,7 +291,7 @@ class NablaDisplayCard extends HTMLElement {
   }
 }
 
-class NablaDisplayCardEditor extends HTMLElement {
+class NablaControlCardEditor extends HTMLElement {
   constructor() {
     super();
     this._config = {};
@@ -326,7 +326,7 @@ class NablaDisplayCardEditor extends HTMLElement {
       </div>
       <div class="form-row">
         <label>Name</label>
-        <input type="text" id="name" value="${this._config.name || "Nabla Display"}" />
+        <input type="text" id="name" value="${this._config.name || "Nabla Control"}" />
       </div>
       <div class="form-row">
         <label>Poll interval (ms)</label>
@@ -351,9 +351,9 @@ class NablaDisplayCardEditor extends HTMLElement {
 
   _valueChanged() {
     const config = {
-      type: "custom:nabla-display-card",
+      type: "custom:nabla-control-card",
       device_id: this.querySelector("#device_id").value,
-      name: this.querySelector("#name").value || "Nabla Display",
+      name: this.querySelector("#name").value || "Nabla Control",
       poll_interval: parseInt(this.querySelector("#poll_interval").value) || 1000,
       scale: parseInt(this.querySelector("#scale").value) || 2,
       show_controls: this.querySelector("#show_controls").checked,
@@ -364,13 +364,13 @@ class NablaDisplayCardEditor extends HTMLElement {
   }
 }
 
-customElements.define("nabla-display-card", NablaDisplayCard);
-customElements.define("nabla-display-card-editor", NablaDisplayCardEditor);
+customElements.define("nabla-control-card", NablaControlCard);
+customElements.define("nabla-control-card-editor", NablaControlCardEditor);
 
 window.customCards = window.customCards || [];
 window.customCards.push({
-  type: "nabla-display-card",
-  name: "Nabla Display Card",
+  type: "nabla-control-card",
+  name: "Nabla Control Card",
   description: "Display mirror for Nabla ESP-UI devices with optional encoder controls",
   preview: false,
 });

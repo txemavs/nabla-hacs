@@ -1,7 +1,7 @@
 # Nabla Control for Home Assistant
 
-HACS integration for **Nabla Control**. Technical domain remains `nabla_display`
-(YAML key, `custom_components/nabla_display/`, WebSocket types).
+HACS integration for **Nabla Control**. Technical domain: `nabla_control`
+(YAML key, `custom_components/nabla_control/`, WebSocket types).
 
 Device menus and on-device UI come from **[Nabla ESP UI](https://github.com/txemavs/nabla-esp-ui)** —
 not from this Home Assistant component. From that project:
@@ -23,7 +23,7 @@ devices, encoder actions, and the sidebar panel.
 - **Nabla web UI** — devices that serve an HTML Nabla UI (`/nabla/state`), with an **Open Nabla** link
 - **Cameras** — when a web device reports `camera_port`, the panel shows a live MJPEG preview
 
-The YAML / Python domain stays `nabla_display` for compatibility; the product name is **Nabla Control**.
+YAML / Python domain and product name: **Nabla Control** (`nabla_control`).
 
 ---
 
@@ -36,12 +36,12 @@ The YAML / Python domain stays `nabla_display` for compatibility; the product na
 
 ### Manual Installation
 
-Copy `custom_components/nabla_display/` into your Home Assistant `config/custom_components/` directory.
+Copy `custom_components/nabla_control/` into your Home Assistant `config/custom_components/` directory.
 
 ## Configuration
 
 ```yaml
-nabla_display:
+nabla_control:
   devices:
     - host: "10.10.10.204"
       name: "Kit1"
@@ -83,10 +83,10 @@ On-device menus remain owned by device YAML + [Nabla ESP UI](https://github.com/
 
 ## Lovelace Card
 
-Resource: `/local/nabla-display-card.js` (module). Example:
+Resource: `/local/nabla-control-card.js` (module). Example:
 
 ```yaml
-type: custom:nabla-display-card
+type: custom:nabla-control-card
 device_id: "10_10_10_204"
 name: "Kit1"
 poll_interval: 1000
@@ -98,13 +98,13 @@ show_controls: true
 
 ## Services
 
-Domain remains `nabla_display` (e.g. `nabla_display.send_action`).
+Service domain: `nabla_control` (e.g. `nabla_control.send_action`).
 
 ---
 
 ## WebSocket
 
-`nabla_display/devices` returns devices including `kind`, `has_camera`, `camera_url`, `open_url`, `has_input`, `available`.
+`nabla_control/devices` returns devices including `kind`, `has_camera`, `camera_url`, `open_url`, `has_input`, `available`.
 
 ---
 

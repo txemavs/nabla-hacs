@@ -1,4 +1,4 @@
-# Button entities for Nabla Display encoder actions.
+# Button entities for Nabla Control encoder actions.
 # Creates up/down/enter/back buttons for devices with input capability.
 
 import logging
@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-DOMAIN = "nabla_display"
+DOMAIN = "nabla_control"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ async def async_setup_platform(
     async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up Nabla Display button entities."""
+    """Set up Nabla Control button entities."""
     devices = hass.data[DOMAIN]["devices"]
 
     entities = []
@@ -34,7 +34,7 @@ async def async_setup_platform(
         if await _wait_for_capabilities(device):
             if device.has_input:
                 for action, name, icon in ACTIONS:
-                    entities.append(NablaDisplayButton(device, action, name, icon))
+                    entities.append(NablaControlButton(device, action, name, icon))
             else:
                 _LOGGER.info("Device %s has no input, skipping buttons", device.name)
 
@@ -54,14 +54,14 @@ async def _wait_for_capabilities(device, timeout: float = 10.0) -> bool:
     return False
 
 
-class NablaDisplayButton(ButtonEntity):
-    """Button entity for a Nabla Display encoder action."""
+class NablaControlButton(ButtonEntity):
+    """Button entity for a Nabla Control encoder action."""
 
     def __init__(self, device, action: str, action_name: str, icon: str):
         self._device = device
         self._action = action
         self._attr_name = f"{device.name} {action_name}"
-        self._attr_unique_id = f"nabla_display_{device.device_id}_{action}"
+        self._attr_unique_id = f"nabla_control_{device.device_id}_{action}"
         self._attr_icon = icon
 
     @property

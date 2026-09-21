@@ -1,4 +1,4 @@
-# WebSocket API handlers for Nabla Control panel (domain: nabla_display).
+# WebSocket API handlers for Nabla Control panel (domain: nabla_control).
 # Provides device listing for the sidebar panel.
 
 import logging
@@ -9,7 +9,7 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
-DOMAIN = "nabla_display"
+DOMAIN = "nabla_control"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ def async_register_websocket_handlers(hass: HomeAssistant) -> None:
 
 @websocket_api.websocket_command(
     {
-        vol.Required("type"): "nabla_display/devices",
+        vol.Required("type"): "nabla_control/devices",
     }
 )
 @callback
