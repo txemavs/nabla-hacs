@@ -19,6 +19,7 @@ from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .mqtt_log import MqttLog
+from .mqtt_presence import MqttPresence
 from .discovery import Discovery
 from .camera import CameraManager, CAMERA_SCHEMA
 from .identity import http_host
@@ -434,7 +435,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
         frontend_url_path=PANEL_URL_PATH,
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
-        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921touch1",
+        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921presence1",
         embed_iframe=False,
         require_admin=False,
     )
@@ -454,6 +455,9 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     cameras.register()
     discovery = Discovery(hass)
     hass.data[DOMAIN]["discovery"] = discovery
+    presence = MqttPresence(hass, discovery)
+    hass.data[DOMAIN]["mqtt_presence"] = presence
+    await presence.restore()
 
     hass.http.register_view(FrameImageView(devices))
 
@@ -495,6 +499,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             data={"entry_type": "camera_cache", **camera_conf}))
 
     async def stop(_event):
+        await presence.close()
         await discovery.close()
         await cameras.close()
         monitor.stop()

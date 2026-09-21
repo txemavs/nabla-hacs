@@ -125,7 +125,7 @@ class Discovery:
                 source_id = entry.data.get('source_entry_id')
                 settings = {**entry.data, **entry.options}
                 source = sources.get(source_id)
-                if entry.disabled_by or not source or not settings.get('follow_source', False):
+                if entry.disabled_by or settings.get('follow_mqtt', False) or not source or not settings.get('follow_source', False):
                     continue
                 host = source['host']
                 if host == settings.get('host') or any(other.entry_id != entry.entry_id and

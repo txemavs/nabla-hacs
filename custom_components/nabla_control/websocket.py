@@ -21,6 +21,7 @@ def async_register_websocket_handlers(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, websocket_cameras)
     websocket_api.async_register_command(hass, websocket_discovery)
     websocket_api.async_register_command(hass, websocket_touch)
+    websocket_api.async_register_command(hass, websocket_mqtt_presence)
 
 
 @websocket_api.websocket_command(
@@ -125,3 +126,23 @@ async def websocket_touch(hass, connection, msg):
         connection.send_result(msg['id'], {'queued': True})
     else:
         connection.send_error(msg['id'], 'touch_unavailable', 'Touch unavailable, busy or not confirmed')
+
+
+@websocket_api.websocket_command({vol.Required('type'): 'nabla_control/mqtt_presence',
+    vol.Optional('operation', default='get'): vol.In(['get', 'configure', 'bind']),
+    vol.Optional('enabled', default=False): bool,
+    vol.Optional('topic_prefix', default='nabla/discovery'): str,
+    vol.Optional('identity'): str, vol.Optional('entry_id'): str})
+@websocket_api.async_response
+async def websocket_mqtt_presence(hass, connection, msg):
+    """MQTT subscription and stable identity binding are explicit admin actions."""
+    connection.require_admin()
+    manager = hass.data[DOMAIN]['mqtt_presence']
+    try:
+        if msg['operation'] == 'configure':
+            await manager.configure(msg)
+        elif msg['operation'] == 'bind':
+            await manager.bind(msg.get('identity'), msg.get('entry_id'))
+        connection.send_result(msg['id'], manager.snapshot())
+    except (ValueError, RuntimeError) as exc:
+        connection.send_error(msg['id'], 'mqtt_presence_error', str(exc))

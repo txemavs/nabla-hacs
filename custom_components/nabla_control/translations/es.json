@@ -10,7 +10,8 @@
           "name": "Nombre",
           "kind": "Tipo de dispositivo",
           "poll_interval": "Intervalo de actualización (segundos)",
-          "follow_source": "Seguir dirección de ESPHome (solo dispositivos vinculados)"
+          "follow_source": "Seguir dirección de ESPHome (solo dispositivos vinculados)",
+          "follow_mqtt": "Seguir la IP anunciada por MQTT (identidad vinculada)"
         }
       },
       "user": {
@@ -55,7 +56,8 @@
           "refresh_interval": "Intervalo mínimo (segundos)",
           "max_stale": "Antigüedad máxima (segundos)",
           "quality": "Calidad JPEG",
-          "follow_source": "Seguir dirección de ESPHome (solo dispositivos vinculados)"
+          "follow_source": "Seguir dirección de ESPHome (solo dispositivos vinculados)",
+          "follow_mqtt": "Seguir la IP anunciada por MQTT (identidad vinculada)"
         }
       }
     },

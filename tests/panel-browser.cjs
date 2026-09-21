@@ -6,7 +6,7 @@ const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),
  const fixture=`<!doctype html><meta charset="utf-8"><style>body{margin:0;font:16px Arial;--primary-color:#1976d2;--divider-color:#ddd;--card-background-color:#fff;--primary-text-color:#222;--secondary-text-color:#666}</style><nabla-panel></nabla-panel><script type="module">
  import '/nabla-panel.js';
  const devices=[{device_id:'panel',name:'Panel salón',host:'192.0.2.10',available:true,width:480,height:320,format:'rgb565',kind:'mirror',has_input:true,has_touch:true},{device_id:'webcam',name:'Dashcam',host:'192.0.2.11',available:true,kind:'web',has_camera:true,camera_url:'/mjpeg'},{device_id:'offline',name:'Reloj',host:'192.0.2.12',available:false,width:240,height:240,kind:'mirror'}];
- window.calls={};document.querySelector('nabla-panel').hass={auth:{data:{access_token:'fixture-only'}},callWS:async msg=>{window.calls[msg.type]=(window.calls[msg.type]||0)+1;if(msg.type==='nabla_control/touch'){window.lastTouch=msg;return {queued:true};}if(msg.type==='nabla_control/devices')return devices;if(msg.type==='lovelace/dashboards/list')return [];if(msg.type==='nabla_control/discovery')return msg.operation==='adopt'?{status:'linked'}:{known:3,partial:false,devices:[{source_entry_id:'sample',name:'Panel salón',host:'192.0.2.10',configured:true,linked:false}]};if(msg.type==='nabla_control/cameras')return [{entity_id:'camera.example',name:'Entrada',interval:1}];if(msg.type==='nabla_control/mqtt_log')return {enabled:false,active:false,topics:[],limit:200,rows:[],dropped:0};}};
+ window.calls={};document.querySelector('nabla-panel').hass={auth:{data:{access_token:'fixture-only'}},callWS:async msg=>{window.calls[msg.type]=(window.calls[msg.type]||0)+1;if(msg.type==='nabla_control/touch'){window.lastTouch=msg;return {queued:true};}if(msg.type==='nabla_control/devices')return devices;if(msg.type==='lovelace/dashboards/list')return [];if(msg.type==='nabla_control/discovery')return msg.operation==='adopt'?{status:'linked'}:{known:3,partial:false,devices:[{source_entry_id:'sample',name:'Panel salón',host:'192.0.2.10',configured:true,linked:false}]};if(msg.type==='nabla_control/cameras')return [{entity_id:'camera.example',name:'Entrada',interval:1}];if(msg.type==='nabla_control/mqtt_presence'){window.lastPresence=msg;return {enabled:false,active:false,topic_prefix:'nabla/discovery',devices:[{entry_id:'entry1',name:'Panel salón'}],announcements:[{device_id:'esp32-001122aabbcc',name:'Test panel',host:'192.0.2.20'}]};}if(msg.type==='nabla_control/mqtt_log')return {enabled:false,active:false,topics:[],limit:200,rows:[],dropped:0};}};
  </script>`;
  let images=0;
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64');
@@ -67,6 +67,15 @@ const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),
   await page.screenshot({path:'/tmp/nabla-tabs-cameras.png'});
   await page.getByRole('tab',{name:'MQTT',exact:true}).click();
   await page.getByText('Registro desactivado',{exact:false}).waitFor();
+  const presence=page.locator('nabla-mqtt-presence');
+  await presence.getByRole('combobox').selectOption('entry1');
+  await presence.getByRole('button',{name:'Vincular y seguir IP'}).click();
+  await page.waitForFunction(()=>window.lastPresence?.operation==='bind');
+  assert.equal(await page.evaluate(()=>window.lastPresence.entry_id),'entry1');
+  await presence.getByRole('checkbox').check();
+  await presence.getByRole('button',{name:'Aplicar',exact:true}).click();
+  await page.waitForFunction(()=>window.lastPresence?.operation==='configure');
+  assert.equal(await page.evaluate(()=>window.lastPresence.topic_prefix),'nabla/discovery');
   before=images;await page.waitForTimeout(2200);assert.equal(images,before,'hidden cameras must stop fetching');
   await page.screenshot({path:'/tmp/nabla-tabs-mqtt.png'});
   await page.getByRole('tab',{name:'Dispositivos',exact:true}).click();
