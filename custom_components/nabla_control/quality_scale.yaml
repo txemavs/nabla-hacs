@@ -1,0 +1,114 @@
+# Nabla Control Quality Scale Tracking
+#
+# This file tracks compliance with the Home Assistant Integration Quality Scale
+# rules for internal reference. Nabla Control is a HACS custom integration and
+# is NOT eligible for official quality scale badges (Bronze, Silver, Gold,
+# Platinum), which apply only to core integrations.
+#
+# This format mirrors the HA quality_scale.yaml structure for consistency.
+# Do NOT set quality_scale in manifest.json — that would be incorrect for HACS.
+#
+# Reference: https://developers.home-assistant.io/docs/core/integration-quality-scale/
+
+rules:
+  # Bronze
+  action-setup: done
+  appropriate-polling: done
+  brands: done
+  common-modules: done
+  config-flow-test-coverage:
+    status: partial
+    comment: Config flow exists; no dedicated test_config_flow.py yet
+  config-flow: done
+  dependency-transparency: done
+  docs-actions: done
+  docs-triggers:
+    status: exempt
+    comment: No device triggers exposed
+  docs-conditions:
+    status: exempt
+    comment: No device conditions exposed
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions:
+    status: partial
+    comment: Standard HA removal; explicit uninstall doc not written
+  entity-event-setup: done
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure: done
+  test-before-setup: done
+  unique-config-entry: done
+
+  # Silver
+  action-exceptions:
+    status: partial
+    comment: Actions log warnings; no ServiceValidationError raised yet
+  config-entry-unloading: done
+  docs-configuration-parameters: done
+  docs-installation-parameters: done
+  entity-unavailable: done
+  integration-owner: done
+  log-when-unavailable: done
+  parallel-updates: done
+  reauthentication-flow:
+    status: exempt
+    comment: No credentials stored; devices are local HTTP
+  test-coverage:
+    status: partial
+    comment: Tests for MQTT, discovery, camera cache, dynamic devices; no full suite
+
+  # Gold
+  devices: done
+  diagnostics:
+    status: todo
+    comment: No diagnostics.py yet
+  discovery-update-info: done
+  discovery: done
+  docs-data-update:
+    status: partial
+    comment: Polling described; data-update coordinator doc not explicit
+  docs-examples: done
+  docs-known-limitations: done
+  docs-supported-devices:
+    status: partial
+    comment: Mirror and web device types described; no hardware list
+  docs-supported-functions: done
+  docs-troubleshooting:
+    status: todo
+    comment: No dedicated troubleshooting section
+  docs-use-cases: done
+  dynamic-devices: done
+  entity-category:
+    status: todo
+    comment: Buttons do not set entity_category
+  entity-device-class:
+    status: exempt
+    comment: Button entities; no applicable device class
+  entity-disabled-by-default:
+    status: todo
+    comment: All entities enabled by default
+  entity-translations:
+    status: partial
+    comment: Config flow translated; entity names not in translations
+  exception-translations:
+    status: todo
+    comment: Error messages not translation-key based
+  icon-translations:
+    status: exempt
+    comment: Custom icon set (nabla:logo); no translation needed
+  reconfiguration-flow: done
+  repair-issues:
+    status: todo
+    comment: No repairs integration used
+  stale-devices:
+    status: partial
+    comment: Devices removed on entry delete; no automatic stale cleanup
+
+  # Platinum (stretch goals)
+  async-dependency: done
+  inject-websession: done
+  strict-typing:
+    status: todo
+    comment: No py.typed marker; type hints present but incomplete
