@@ -129,6 +129,15 @@ Service domain: `nabla_control` (e.g. `nabla_control.send_action`).
 
 ---
 
+## Quality
+
+Nabla Control is a **HACS custom integration** (Custom tier) and is not eligible
+for the official Home Assistant Integration Quality Scale badges. We track the
+[official quality rules](https://developers.home-assistant.io/docs/core/integration-quality-scale/)
+as a checklist to maintain Gold-level practices. See [docs/QUALITY-SCALE.md](docs/QUALITY-SCALE.md).
+
+---
+
 ## Related projects
 
 - [Nabla ESP UI](https://github.com/txemavs/nabla-esp-ui) — on-device menus and mirror contract
