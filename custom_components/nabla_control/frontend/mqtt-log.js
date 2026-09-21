@@ -9,7 +9,7 @@ class NablaMqttLog extends HTMLElement {
       button{margin:6px}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto}
       #status{color:var(--secondary-text-color)}
       </style><details><summary>MQTT · visor opcional</summary>
-      <p>Solo lectura. Usa el broker configurado en Home Assistant. Desactivado inicialmente.</p>
+      <p>Marca «Activar registro», escribe los temas y pulsa «Aplicar». Solo lectura; usa el broker MQTT de Home Assistant. Requiere una cuenta administradora.</p>
       <label><input id="enabled" type="checkbox"> Activar registro</label>
       <label>Temas MQTT (uno por línea, máximo ocho)<textarea id="topics" placeholder="nabla/ha/+/ui/#"></textarea></label>
       <label>Mensajes en memoria <input id="limit" type="number" min="50" max="1000" value="200"></label>
@@ -41,6 +41,12 @@ class NablaMqttLog extends HTMLElement {
       catch(e) { q('status').textContent = e.message || String(e); }
     };
     q('filter').oninput = () => this.renderRows();
+  }
+  open() {
+    const details = this.shadowRoot.querySelector('details');
+    details.open = true;
+    this.scrollIntoView({block: 'nearest'});
+    this.shadowRoot.getElementById('enabled').focus();
   }
   async refresh(settings=false) {
     if (this._busy || !this._hass || !this.isConnected) return;

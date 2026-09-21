@@ -129,7 +129,7 @@ MIT
 
 ## Optional MQTT monitor (0.6)
 
-Open **MQTT · visor opcional** in the Nabla Control panel. An administrator can
+Press the **MQTT** button at the top of Nabla Control to open **MQTT · visor opcional**. An administrator can
 activate it, enter up to eight MQTT topic filters and select 50–1000 retained
 history rows (200 by default). This uses the existing Home Assistant MQTT broker;
 there is no additional broker login or dependency when the monitor is disabled.

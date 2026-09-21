@@ -1,4 +1,4 @@
-import "./mqtt-log.js";
+import "./mqtt-log.js?v=20260921access1";
 // Nabla Control panel for Home Assistant (domain: nabla_control)
 // Sidebar listing configured Control devices (mirror displays, Nabla web UI, cameras)
 // with live preview and dashboard assignment.
@@ -18,6 +18,8 @@ class NablaPanel extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    const monitor = this.shadowRoot.querySelector("nabla-mqtt-log");
+    if (monitor) monitor.hass = hass;
     if (!this._initialized) {
       this._initialized = true;
       this._render();
@@ -82,6 +84,8 @@ class NablaPanel extends HTMLElement {
         }
         .header {
           display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
           align-items: center;
           justify-content: space-between;
           padding: 16px 0;
@@ -514,9 +518,10 @@ class NablaPanel extends HTMLElement {
       <div class="container">
         <div class="header">
           <h1>
-            <svg class="header-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z"/></svg>
+            <svg class="header-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2.4 6.4574373H21.6L12 23.0851253Z M5.664 8.341908L12 19.3161827L18.336 8.341908Z"/></svg>
             Nabla Control
           </h1>
+          <button class="refresh-btn" id="mqtt-open">MQTT</button>
           <a class="refresh-btn" href="/config/integrations/integration/nabla_control">Gestionar dispositivos</a>
           <button class="refresh-btn" id="refresh-btn">
             <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/></svg>
@@ -600,6 +605,9 @@ class NablaPanel extends HTMLElement {
   }
 
   _setupEventListeners() {
+    this.shadowRoot.getElementById("mqtt-open").addEventListener("click", () => {
+      this.shadowRoot.querySelector("nabla-mqtt-log").open();
+    });
     // Refresh button
     this.shadowRoot.getElementById("refresh-btn").addEventListener("click", () => {
       this._loadData();
