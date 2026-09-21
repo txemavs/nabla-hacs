@@ -14,9 +14,11 @@ from homeassistant.components import panel_custom
 from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.helpers import config_validation as cv, discovery
+from homeassistant.helpers import config_validation as cv
+from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from .identity import http_host
 from .frame import decode_frame, image_to_png_bytes, infer_profile_from_size
 from .websocket import async_register_websocket_handlers
 
@@ -63,7 +65,9 @@ class DeviceState:
         poll_interval: float,
         session: aiohttp.ClientSession,
         kind: str = DEFAULT_KIND,
+        device_id: str | None = None,
     ):
+        self._device_id = device_id or host.replace(".", "_").replace(":", "_")
         self.host = host
         self.name = name
         self.poll_interval = poll_interval
@@ -89,8 +93,8 @@ class DeviceState:
 
     @property
     def device_id(self) -> str:
-        """Stable ID derived from host."""
-        return self.host.replace(".", "_").replace(":", "_")
+        """Persistent identity; changing the address does not change dashboard IDs."""
+        return self._device_id
 
     @property
     def width(self) -> int:
@@ -119,10 +123,10 @@ class DeviceState:
         has_cam = bool(camera_port)
         self.kind = KIND_WEB
         self.nabla_state = state
-        self.web_url = f"http://{self.host}/"
+        self.web_url = f"http://{http_host(self.host)}/"
         self.has_camera = has_cam
         self.camera_url = (
-            f"http://{self.host}:{camera_port}/" if has_cam else None
+            f"http://{http_host(self.host)}:{camera_port}/" if has_cam else None
         )
         self.capabilities = {
             "kind": KIND_WEB,
@@ -141,7 +145,7 @@ class DeviceState:
     async def fetch_nabla_state(self) -> bool:
         """Fetch Nabla web UI /nabla/state JSON. Returns True on success."""
         try:
-            url = f"http://{self.host}/nabla/state"
+            url = f"http://{http_host(self.host)}/nabla/state"
             async with self.session.get(
                 url, timeout=aiohttp.ClientTimeout(total=5)
             ) as resp:
@@ -176,7 +180,7 @@ class DeviceState:
     async def fetch_capabilities(self) -> bool:
         """Fetch mirror device capabilities. Returns True on success."""
         try:
-            url = f"http://{self.host}/mirror/capabilities"
+            url = f"http://{http_host(self.host)}/mirror/capabilities"
             async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as resp:
                 if resp.status == 200:
                     self.capabilities = await resp.json()
@@ -196,7 +200,7 @@ class DeviceState:
     async def probe_frame_for_fallback(self) -> bool:
         """Probe /mirror/frame to infer profile from size when capabilities unavailable."""
         try:
-            url = f"http://{self.host}/mirror/frame"
+            url = f"http://{http_host(self.host)}/mirror/frame"
             async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                 if resp.status == 200:
                     frame_data = await resp.read()
@@ -234,7 +238,7 @@ class DeviceState:
         if not self.has_input:
             return True
         try:
-            url = f"http://{self.host}/mirror/token"
+            url = f"http://{http_host(self.host)}/mirror/token"
             async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as resp:
                 if resp.status == 200:
                     self.token = await resp.text()
@@ -250,7 +254,7 @@ class DeviceState:
         if not self.capabilities or self.kind == KIND_WEB:
             return False
         try:
-            url = f"http://{self.host}/mirror/frame"
+            url = f"http://{http_host(self.host)}/mirror/frame"
             async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                 if resp.status == 200:
                     self.last_frame = await resp.read()
@@ -285,7 +289,7 @@ class DeviceState:
             return False
 
         try:
-            url = f"http://{self.host}/mirror/action"
+            url = f"http://{http_host(self.host)}/mirror/action"
             headers = {"X-Nabla-Token": self.token}
             data = {"action": action}
             async with self.session.post(
@@ -399,7 +403,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
         frontend_url_path=PANEL_URL_PATH,
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
-        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921ctrl1",
+        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921dynamic1",
         embed_iframe=False,
         require_admin=False,
     )
@@ -409,24 +413,8 @@ async def async_register_panel(hass: HomeAssistant) -> None:
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the Nabla Control integration (domain nabla_control)."""
-    conf = config.get(DOMAIN)
-    if not conf:
-        return True
-
-    session = async_get_clientsession(hass)
     devices: dict[str, DeviceState] = {}
-
-    for device_conf in conf[CONF_DEVICES]:
-        host = device_conf[CONF_HOST]
-        name = device_conf.get(CONF_NAME, f"Nabla Control {host}")
-        poll_interval = device_conf.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
-        kind = device_conf.get(CONF_KIND, DEFAULT_KIND)
-
-        device = DeviceState(host, name, poll_interval, session, kind=kind)
-        devices[device.device_id] = device
-        device.start_polling()
-
-    hass.data[DOMAIN] = {"devices": devices}
+    hass.data[DOMAIN] = {"devices": devices, "entries": {}}
 
     hass.http.register_view(FrameImageView(devices))
 
@@ -453,14 +441,58 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         })
     )
 
-    await discovery.async_load_platform(hass, Platform.BUTTON, DOMAIN, {}, config)
+    # Import legacy YAML once, including offline devices. Existing entries win
+    # on subsequent boots so obsolete YAML cannot revert a changed address.
+    for device_conf in config.get(DOMAIN, {}).get(CONF_DEVICES, []):
+        hass.async_create_task(hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_IMPORT},
+            data=dict(device_conf),
+        ))
 
     async def stop(_event):
-        for device in devices.values():
+        for device in list(devices.values()):
             await device.stop_polling()
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, stop)
 
+    return True
+
+
+async def async_setup_entry(hass, entry) -> bool:
+    """Load one device without restarting the server or other devices."""
+    data = {**entry.data, **entry.options}
+    device = DeviceState(
+        data[CONF_HOST], data.get(CONF_NAME, entry.title),
+        data.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL),
+        async_get_clientsession(hass), kind=data.get(CONF_KIND, DEFAULT_KIND),
+        device_id=entry.data["device_id"],
+    )
+    registry = hass.data[DOMAIN]
+    registry["devices"][device.device_id] = device
+    registry["entries"][entry.entry_id] = device
+    device.start_polling()
+    try:
+        await hass.config_entries.async_forward_entry_setups(entry, [Platform.BUTTON])
+    except Exception:
+        await device.stop_polling()
+        registry["devices"].pop(device.device_id, None)
+        registry["entries"].pop(entry.entry_id, None)
+        raise
+    entry.async_on_unload(entry.add_update_listener(_async_update_entry))
+    return True
+
+
+async def _async_update_entry(hass, entry):
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_unload_entry(hass, entry) -> bool:
+    """Cancel polling and unload only this device's entities."""
+    if not await hass.config_entries.async_unload_platforms(entry, [Platform.BUTTON]):
+        return False
+    device = hass.data[DOMAIN]["entries"].pop(entry.entry_id)
+    await device.stop_polling()
+    hass.data[DOMAIN]["devices"].pop(device.device_id, None)
     return True
 
 
