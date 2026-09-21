@@ -1,14 +1,8 @@
-# Nabla Control Quality Scale Tracking
+# Home Assistant Integration Quality Scale
+# https://developers.home-assistant.io/docs/integration_quality_scale_index/
 #
-# This file tracks compliance with the Home Assistant Integration Quality Scale
-# rules for internal reference. Nabla Control is a HACS custom integration and
-# is NOT eligible for official quality scale badges (Bronze, Silver, Gold,
-# Platinum), which apply only to core integrations.
-#
-# This format mirrors the HA quality_scale.yaml structure for consistency.
-# Do NOT set quality_scale in manifest.json — that would be incorrect for HACS.
-#
-# Reference: https://developers.home-assistant.io/docs/core/integration-quality-scale/
+# Note: Official badges do not apply to custom/HACS integrations.
+# This file tracks alignment with Gold-level practices.
 
 rules:
   # Bronze
@@ -16,99 +10,103 @@ rules:
   appropriate-polling: done
   brands: done
   common-modules: done
-  config-flow-test-coverage:
-    status: partial
-    comment: Config flow exists; no dedicated test_config_flow.py yet
   config-flow: done
+  config-flow-test-coverage:
+    status: todo
+    comment: Tests exist but coverage percentage not measured
   dependency-transparency: done
   docs-actions: done
-  docs-triggers:
-    status: exempt
-    comment: No device triggers exposed
-  docs-conditions:
-    status: exempt
-    comment: No device conditions exposed
   docs-high-level-description: done
   docs-installation-instructions: done
-  docs-removal-instructions:
-    status: partial
-    comment: Standard HA removal; explicit uninstall doc not written
-  entity-event-setup: done
+  docs-removal-instructions: done
+  entity-event-setup:
+    status: exempt
+    comment: No event entities in this integration
   entity-unique-id: done
-  has-entity-name: done
-  runtime-data: done
+  has-entity-name:
+    status: todo
+    comment: Uses _attr_name directly; migrate to has_entity_name pattern
+  runtime-data:
+    status: todo
+    comment: Uses hass.data[DOMAIN]; migrate to entry.runtime_data
   test-before-configure: done
   test-before-setup: done
   unique-config-entry: done
 
   # Silver
-  action-exceptions:
-    status: partial
-    comment: Actions log warnings; no ServiceValidationError raised yet
+  action-exceptions: done
   config-entry-unloading: done
   docs-configuration-parameters: done
-  docs-installation-parameters: done
+  docs-installation-parameters:
+    status: exempt
+    comment: No install-time parameters beyond config flow
   entity-unavailable: done
   integration-owner: done
   log-when-unavailable: done
-  parallel-updates: done
+  parallel-updates:
+    status: todo
+    comment: Devices poll independently but no explicit parallel_updates constant
   reauthentication-flow:
     status: exempt
-    comment: No credentials stored; devices are local HTTP
+    comment: No external authentication required
   test-coverage:
-    status: partial
-    comment: Tests for MQTT, discovery, camera cache, dynamic devices; no full suite
+    status: todo
+    comment: Tests exist; 95% threshold not measured
 
   # Gold
   devices: done
-  diagnostics:
+  diagnostics: done
+  discovery:
     status: todo
-    comment: No diagnostics.py yet
-  discovery-update-info: done
-  discovery: done
+    comment: ESPHome discovery only; no zeroconf/SSDP
+  discovery-update-info:
+    status: done
+    comment: Follow ESPHome address changes when linked
   docs-data-update:
-    status: partial
-    comment: Polling described; data-update coordinator doc not explicit
-  docs-examples: done
-  docs-known-limitations: done
+    status: todo
+    comment: Polling behavior described but not in dedicated section
+  docs-examples:
+    status: done
+    comment: Card example in README
+  docs-known-limitations:
+    status: todo
+    comment: Need explicit limitations section
   docs-supported-devices:
-    status: partial
-    comment: Mirror and web device types described; no hardware list
+    status: done
+    comment: Mirror/web device types described
   docs-supported-functions: done
-  docs-troubleshooting:
+  docs-troubleshooting: done
+  docs-use-cases:
     status: todo
-    comment: No dedicated troubleshooting section
-  docs-use-cases: done
-  dynamic-devices: done
+    comment: Use cases implied but not explicit section
+  dynamic-devices:
+    status: done
+    comment: Devices added via config entries
   entity-category:
-    status: todo
-    comment: Buttons do not set entity_category
+    status: done
+    comment: Primary controls uncategorized (correct for user-facing actions)
   entity-device-class:
-    status: exempt
-    comment: Button entities; no applicable device class
-  entity-disabled-by-default:
     status: todo
-    comment: All entities enabled by default
+    comment: Buttons use default class; no specific device class needed
+  entity-disabled-by-default: done
   entity-translations:
-    status: partial
-    comment: Config flow translated; entity names not in translations
-  exception-translations:
     status: todo
-    comment: Error messages not translation-key based
+    comment: Config strings translated; entity names not
+  exception-translations: done
   icon-translations:
-    status: exempt
-    comment: Custom icon set (nabla:logo); no translation needed
+    status: todo
+    comment: Icons not using translation keys
   reconfiguration-flow: done
   repair-issues:
     status: todo
-    comment: No repairs integration used
+    comment: No repair flows implemented
   stale-devices:
-    status: partial
-    comment: Devices removed on entry delete; no automatic stale cleanup
+    status: todo
+    comment: No automatic stale device removal
 
-  # Platinum (stretch goals)
+  # Platinum (not targeted for HACS custom)
   async-dependency: done
   inject-websession: done
   strict-typing:
     status: todo
-    comment: No py.typed marker; type hints present but incomplete
+    comment: No py.typed marker or full type coverage
