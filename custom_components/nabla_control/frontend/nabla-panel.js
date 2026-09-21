@@ -609,11 +609,10 @@ class NablaPanel extends HTMLElement {
         .device-search{display:flex;align-items:center;gap:8px;border:1px solid var(--divider-color);border-radius:5px;background:var(--card-background-color);padding:0 12px;flex:1;max-width:460px;min-width:220px}
         .device-search:focus-within{outline:2px solid var(--primary-color);outline-offset:-1px}
         .device-search input{border:0;outline:0;padding:11px 0;width:100%;font:inherit;background:transparent;color:var(--primary-text-color)}
-        .device-toolbar .view-toggle{margin:0;gap:0}
-        .view-toggle button{padding:10px;border-radius:0;font-size:14px}
-        .view-toggle button:first-child{border-radius:5px 0 0 5px}
-        .view-toggle button:last-child{border-radius:0 5px 5px 0}
-        .view-toggle button[aria-pressed="true"]{background:var(--primary-color);color:var(--text-primary-color,#fff)}
+        .device-toolbar .view-toggle{margin:0;gap:0;display:inline-flex;border:1px solid var(--divider-color);border-radius:8px;overflow:hidden;background:var(--card-background-color)}
+        .view-toggle button{padding:8px 10px;border:0;border-radius:0;font-size:14px;background:transparent;color:var(--secondary-text-color);min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+        .view-toggle button+button{border-left:1px solid var(--divider-color)}
+        .view-toggle button[aria-pressed="true"]{background:var(--secondary-background-color);color:var(--primary-text-color)}
         .status-filter{font-size:13px;color:var(--secondary-text-color)}
         .status-filter select{font:inherit;padding:10px;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:5px}
         .add-device{margin-left:auto;text-decoration:none}
@@ -661,9 +660,9 @@ class NablaPanel extends HTMLElement {
         <section id="devices-panel" role="tabpanel" aria-labelledby="tab-devices">
         <div class="device-toolbar">
           <label class="device-search"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M9.5 3a6.5 6.5 0 1 0 4 11.6L19.9 21l1.4-1.4-6.4-6.4A6.5 6.5 0 0 0 9.5 3m0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9"/></svg><input id="device-search" type="search" placeholder="${this._t("search_devices")}" aria-label="${this._t("search_devices")}"></label>
-          <div class="view-toggle" aria-label="${this._t("tab_devices")}">
-            <button data-view="screens" aria-pressed="false" title="${this._t("view_screens")}"><span aria-hidden="true">▦</span> ${this._t("view_screens")}</button>
-            <button data-view="details" aria-pressed="true" title="${this._t("view_details")}"><span aria-hidden="true">☷</span> ${this._t("view_details")}</button>
+          <div class="view-toggle" role="group" aria-label="${this._t("tab_devices")}">
+            <button type="button" data-view="screens" aria-pressed="false" title="${this._t("view_screens")}" aria-label="${this._t("view_screens")}"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 3h8v8H3V3m10 0h8v8h-8V3M3 13h8v8H3v-8m10 0h8v8h-8v-8Z"/></svg></button>
+            <button type="button" data-view="details" aria-pressed="true" title="${this._t("view_details")}" aria-label="${this._t("view_details")}"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5h18v2H3V5m0 6h18v2H3v-2m0 6h18v2H3v-2Z"/></svg></button>
           </div>
           <label class="status-filter">${this._t("status")} <select id="device-status"><option value="all">${this._t("status_all")}</option><option value="online">${this._t("status_online")}</option><option value="offline">${this._t("status_offline")}</option></select></label>
           <button class="refresh-btn" id="discover-devices">${this._t("discover")}</button>

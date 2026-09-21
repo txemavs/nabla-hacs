@@ -435,7 +435,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
         frontend_url_path=PANEL_URL_PATH,
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
-        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921presence2",
+        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921ui3",
         embed_iframe=False,
         require_admin=False,
     )
