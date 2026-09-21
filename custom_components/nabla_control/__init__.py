@@ -177,7 +177,12 @@ class DeviceState:
         """Fetch mirror device capabilities. Returns True on success."""
         try:
             url = f"http://{self.host}/mirror/capabilities"
-            async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+            # ESP HTTP often drops keep-alive; force close so aiohttp reads real capabilities JSON.
+            async with self.session.get(
+                url,
+                headers={"Connection": "close"},
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as resp:
                 if resp.status == 200:
                     self.capabilities = await resp.json()
                     self.capabilities_from_fallback = False
@@ -197,7 +202,11 @@ class DeviceState:
         """Probe /mirror/frame to infer profile from size when capabilities unavailable."""
         try:
             url = f"http://{self.host}/mirror/frame"
-            async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            async with self.session.get(
+                url,
+                headers={"Connection": "close"},
+                timeout=aiohttp.ClientTimeout(total=10),
+            ) as resp:
                 if resp.status == 200:
                     frame_data = await resp.read()
                     profile = infer_profile_from_size(len(frame_data))
@@ -235,7 +244,11 @@ class DeviceState:
             return True
         try:
             url = f"http://{self.host}/mirror/token"
-            async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+            async with self.session.get(
+                url,
+                headers={"Connection": "close"},
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as resp:
                 if resp.status == 200:
                     self.token = await resp.text()
                     _LOGGER.debug("Token fetched for %s", self.name)
@@ -251,7 +264,11 @@ class DeviceState:
             return False
         try:
             url = f"http://{self.host}/mirror/frame"
-            async with self.session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            async with self.session.get(
+                url,
+                headers={"Connection": "close"},
+                timeout=aiohttp.ClientTimeout(total=10),
+            ) as resp:
                 if resp.status == 200:
                     self.last_frame = await resp.read()
                     image = decode_frame(
