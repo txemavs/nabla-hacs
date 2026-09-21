@@ -1,0 +1,23 @@
+send_action:
+  name: Send Action
+  description: Send an encoder action to a Nabla Control device.
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID (host IP with dots as underscores, e.g., 192_168_1_100).
+      required: true
+      example: "10_10_10_204"
+      selector:
+        text:
+    action:
+      name: Action
+      description: Encoder action to send.
+      required: true
+      example: "enter"
+      selector:
+        select:
+          options:
+            - "up"
+            - "down"
+            - "enter"
+            - "back"

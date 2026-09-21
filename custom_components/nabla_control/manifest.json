@@ -1,0 +1,10 @@
+{
+  "domain": "nabla_control",
+  "name": "Nabla Control",
+  "version": "0.4.0",
+  "documentation": "https://github.com/txemavs/nabla-hacs",
+  "codeowners": ["@txemavs"],
+  "dependencies": ["http", "frontend", "panel_custom", "lovelace"],
+  "iot_class": "local_polling",
+  "requirements": ["Pillow>=10.0.0"]
+}
