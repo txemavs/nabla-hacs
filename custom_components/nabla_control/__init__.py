@@ -237,9 +237,13 @@ class DeviceState:
             _LOGGER.warning("Frame probe failed for %s: %s", self.name, e)
         return False
 
+    @property
+    def has_touch(self) -> bool:
+        return bool(self.capabilities and self.capabilities.get("touch") is True)
+
     async def fetch_token(self) -> bool:
         """Fetch CSRF token for input. Returns True on success."""
-        if not self.has_input:
+        if not self.has_input and not self.has_touch:
             return True
         try:
             url = f"http://{http_host(self.host)}/mirror/token"
@@ -276,6 +280,27 @@ class DeviceState:
         except Exception as e:
             _LOGGER.warning("Frame fetch failed for %s: %s", self.name, e)
         self.available = False
+        return False
+
+    async def send_touch(self, x: int, y: int) -> bool:
+        """One short tap; only retry a rejected token, never an uncertain action."""
+        if not self.available or self.kind == KIND_WEB or not self.has_touch:
+            return False
+        if type(x) is not int or type(y) is not int or not (0 <= x < self.width and 0 <= y < self.height):
+            return False
+        if not self.token and not await self.fetch_token():
+            return False
+        try:
+            for attempt in range(2):
+                async with self.session.post(f"http://{http_host(self.host)}/mirror/touch",
+                        headers={"X-Nabla-Token": self.token}, data={"x": str(x), "y": str(y)},
+                        timeout=aiohttp.ClientTimeout(total=3)) as response:
+                    if response.status == 200:
+                        return True
+                    if response.status != 401 or attempt or not await self.fetch_token():
+                        return False
+        except (aiohttp.ClientError, asyncio.TimeoutError):
+            return False
         return False
 
     async def send_action(self, action: str) -> bool:
@@ -409,7 +434,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
         frontend_url_path=PANEL_URL_PATH,
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
-        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921discovery1",
+        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921touch1",
         embed_iframe=False,
         require_admin=False,
     )

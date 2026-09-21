@@ -48,6 +48,6 @@ Pending separately:
 
 - Stable firmware identity and authenticated/scoped MQTT address announcements
   across subnets or multiple Home Assistants.
-- Remote touch coordinates and negotiated touch capability for mirrored displays.
+- Drag/held-input support beyond the optional [short remote taps](REMOTE-TOUCH.md).
 
 The optional MQTT log remains a viewer, not a discovery or command transport.

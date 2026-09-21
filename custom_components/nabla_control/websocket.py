@@ -20,6 +20,7 @@ def async_register_websocket_handlers(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, websocket_mqtt_log)
     websocket_api.async_register_command(hass, websocket_cameras)
     websocket_api.async_register_command(hass, websocket_discovery)
+    websocket_api.async_register_command(hass, websocket_touch)
 
 
 @websocket_api.websocket_command(
@@ -48,6 +49,7 @@ def websocket_get_devices(
             "height": device.height,
             "format": device.format,
             "has_input": device.has_input,
+            "has_touch": device.has_touch,
             "poll_interval": device.poll_interval,
             "capabilities_from_fallback": getattr(device, "capabilities_from_fallback", False),
             "kind": getattr(device, "kind", None) or "mirror",
@@ -108,3 +110,18 @@ async def websocket_discovery(hass, connection, msg):
         connection.send_result(msg["id"], result)
     except ValueError as exc:
         connection.send_error(msg["id"], "discovery_error", str(exc))
+
+
+@websocket_api.websocket_command({vol.Required("type"): "nabla_control/touch",
+    vol.Required("device_id"): str,
+    vol.Required("x"): vol.All(int, vol.Range(min=0, max=479)),
+    vol.Required("y"): vol.All(int, vol.Range(min=0, max=479))})
+@websocket_api.async_response
+async def websocket_touch(hass, connection, msg):
+    """Gate remote taps to administrators and negotiated device capabilities."""
+    connection.require_admin()
+    device = hass.data[DOMAIN]["devices"].get(msg['device_id'])
+    if device and await device.send_touch(msg['x'], msg['y']):
+        connection.send_result(msg['id'], {'queued': True})
+    else:
+        connection.send_error(msg['id'], 'touch_unavailable', 'Touch unavailable, busy or not confirmed')

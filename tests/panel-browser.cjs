@@ -5,8 +5,8 @@ const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),
  const root=path.resolve(__dirname,'../custom_components/nabla_control/frontend');
  const fixture=`<!doctype html><meta charset="utf-8"><style>body{margin:0;font:16px Arial;--primary-color:#1976d2;--divider-color:#ddd;--card-background-color:#fff;--primary-text-color:#222;--secondary-text-color:#666}</style><nabla-panel></nabla-panel><script type="module">
  import '/nabla-panel.js';
- const devices=[{device_id:'panel',name:'Panel salón',host:'192.0.2.10',available:true,width:480,height:320,format:'rgb565',kind:'mirror',has_input:true},{device_id:'webcam',name:'Dashcam',host:'192.0.2.11',available:true,kind:'web',has_camera:true,camera_url:'/mjpeg'},{device_id:'offline',name:'Reloj',host:'192.0.2.12',available:false,width:240,height:240,kind:'mirror'}];
- window.calls={};document.querySelector('nabla-panel').hass={auth:{data:{access_token:'fixture-only'}},callWS:async msg=>{window.calls[msg.type]=(window.calls[msg.type]||0)+1;if(msg.type==='nabla_control/devices')return devices;if(msg.type==='lovelace/dashboards/list')return [];if(msg.type==='nabla_control/discovery')return msg.operation==='adopt'?{status:'linked'}:{known:3,partial:false,devices:[{source_entry_id:'sample',name:'Panel salón',host:'192.0.2.10',configured:true,linked:false}]};if(msg.type==='nabla_control/cameras')return [{entity_id:'camera.example',name:'Entrada',interval:1}];if(msg.type==='nabla_control/mqtt_log')return {enabled:false,active:false,topics:[],limit:200,rows:[],dropped:0};}};
+ const devices=[{device_id:'panel',name:'Panel salón',host:'192.0.2.10',available:true,width:480,height:320,format:'rgb565',kind:'mirror',has_input:true,has_touch:true},{device_id:'webcam',name:'Dashcam',host:'192.0.2.11',available:true,kind:'web',has_camera:true,camera_url:'/mjpeg'},{device_id:'offline',name:'Reloj',host:'192.0.2.12',available:false,width:240,height:240,kind:'mirror'}];
+ window.calls={};document.querySelector('nabla-panel').hass={auth:{data:{access_token:'fixture-only'}},callWS:async msg=>{window.calls[msg.type]=(window.calls[msg.type]||0)+1;if(msg.type==='nabla_control/touch'){window.lastTouch=msg;return {queued:true};}if(msg.type==='nabla_control/devices')return devices;if(msg.type==='lovelace/dashboards/list')return [];if(msg.type==='nabla_control/discovery')return msg.operation==='adopt'?{status:'linked'}:{known:3,partial:false,devices:[{source_entry_id:'sample',name:'Panel salón',host:'192.0.2.10',configured:true,linked:false}]};if(msg.type==='nabla_control/cameras')return [{entity_id:'camera.example',name:'Entrada',interval:1}];if(msg.type==='nabla_control/mqtt_log')return {enabled:false,active:false,topics:[],limit:200,rows:[],dropped:0};}};
  </script>`;
  let images=0;
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64');
@@ -51,6 +51,16 @@ const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),
   await page.screenshot({path:'/tmp/nabla-tabs-details.png'});
   await page.locator('tbody tr').filter({hasText:'Panel salón'}).getByRole('button',{name:'Ver',exact:true}).click();
   await page.locator('#live-modal.active').waitFor();
+  await page.locator('#live-frame[src^="blob:"]').waitFor();
+  await page.locator('#live-frame').evaluate(async img=>{await img.decode();img.style.width='400px';img.style.height='400px';});
+  const bounds=await page.locator('#live-frame').boundingBox();
+  await page.locator('#live-frame').evaluate(img=>{const b=img.getBoundingClientRect();img.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:b.left+b.width/2,clientY:b.top+b.height/2}));});
+  await page.waitForFunction(()=>window.lastTouch);
+  assert.equal(await page.evaluate(()=>window.lastTouch.x),240);
+  assert.ok(Math.abs(await page.evaluate(()=>window.lastTouch.y)-160)<=1,'center coordinate rounded to a logical pixel');
+  const taps=await page.evaluate(()=>window.calls['nabla_control/touch']);
+  await page.locator('#live-frame').evaluate(img=>{const b=img.getBoundingClientRect();img.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:b.left+b.width/2,clientY:b.top+10}));});
+  assert.equal(await page.evaluate(()=>window.calls['nabla_control/touch']),taps,'letterbox must not send a tap');
   await page.locator('#live-modal-close').click();
   await page.getByRole('tab',{name:'Cámaras',exact:true}).click();
   await page.locator('nabla-cameras img[src^="blob:"]').waitFor();

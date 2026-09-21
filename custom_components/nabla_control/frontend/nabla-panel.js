@@ -678,6 +678,7 @@ class NablaPanel extends HTMLElement {
   }
 
   _setupEventListeners() {
+    this.shadowRoot.getElementById('live-frame').onclick=event=>this._sendTouch(event);
     this.shadowRoot.getElementById('discover-devices').onclick=()=>this._discoverDevices();
     this.shadowRoot.getElementById('device-search').oninput=e=>{this._search=e.target.value;this._renderDeviceList();};
     this.shadowRoot.getElementById('device-status').onchange=e=>{this._statusFilter=e.target.value;this._renderDeviceList();};
@@ -1006,6 +1007,7 @@ class NablaPanel extends HTMLElement {
     const controls = this.shadowRoot.getElementById("live-controls");
     const info = this.shadowRoot.getElementById("live-info");
 
+    frame.style.cursor=device.has_touch?"pointer":"default";
     title.textContent = `Live View - ${device.name}`;
     controls.style.display = device.has_input && device.kind !== "web" ? "flex" : "none";
 
@@ -1028,7 +1030,7 @@ class NablaPanel extends HTMLElement {
 
     this._loadAuthenticatedFrame(frame, device.device_id);
     frame.style.width = `${Math.min(device.width * 3, 480)}px`;
-    info.textContent = `${device.width}×${device.height} ${device.format}`;
+    info.textContent = `${device.width}×${device.height} ${device.format} · ${device.has_touch?"Pulsa la imagen para tocar (sin arrastre)":"Sin entrada táctil remota"}`;
 
     modal.classList.add("active");
 
@@ -1050,6 +1052,24 @@ class NablaPanel extends HTMLElement {
     if (frame) {
       frame.removeAttribute("src");
     }
+  }
+
+  async _sendTouch(event) {
+    const device=this._selectedDevice;
+    if(!device?.has_touch||this._touchBusy)return;
+    const img=this.shadowRoot.getElementById('live-frame'),box=img.getBoundingClientRect();
+    const width=img.clientWidth,height=img.clientHeight;
+    const scale=Math.min(width/device.width,height/device.height);
+    if(!scale)return;
+    const x=Math.floor((event.clientX-box.left-img.clientLeft-(width-device.width*scale)/2)/scale);
+    const y=Math.floor((event.clientY-box.top-img.clientTop-(height-device.height*scale)/2)/scale);
+    if(x<0||y<0||x>=device.width||y>=device.height)return;
+    this._touchBusy=true;
+    try{
+      await this._hass.callWS({type:'nabla_control/touch',device_id:device.device_id,x,y});
+      if(this._selectedDevice===device)this.shadowRoot.getElementById('live-info').textContent='Toque enviado';
+    }catch(e){if(this._selectedDevice===device)this.shadowRoot.getElementById('live-info').textContent='No se confirmó el toque; no se ha repetido.';}
+    finally{this._touchBusy=false;}
   }
 
   async _sendAction(deviceId, action) {

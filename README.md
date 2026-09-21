@@ -65,7 +65,8 @@ New devices receive a persistent local ID. **Search new devices** finds compatib
 endpoints already registered with HA’s ESPHome integration. **Link IP** can follow
 address changes known to that integration without changing dashboard references.
 See [discovery and its limits](docs/DISCOVERY.md). Firmware identity, MQTT
-announcements across subnets and remote touch remain separate next phases.
+announcements across subnets remain a next phase. Optional [remote taps](docs/REMOTE-TOUCH.md)
+are available for LVGL firmware that advertises touch; drags remain pending.
 
 ### Options
 
@@ -95,6 +96,7 @@ After restart, **Nabla Control** appears in the sidebar:
 - **Open Nabla** for web devices
 - Live View and Add to Dashboard for mirror devices
 - Encoder controls when `has_input` is true
+- Short taps in Live View when firmware advertises `touch` (administrator access)
 
 On-device menus remain owned by device YAML + [Nabla ESP UI](https://github.com/txemavs/nabla-esp-ui); this panel observes and controls from Home Assistant.
 
