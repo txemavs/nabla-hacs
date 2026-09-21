@@ -22,10 +22,10 @@ devices, encoder actions, and the sidebar panel.
 - **Mirror displays** — live ESP screen preview and encoder actions (firmware from Nabla ESP UI)
 - **Nabla web UI** — devices that serve an HTML Nabla UI (`/nabla/state`), with an **Open Nabla** link
 - **Cameras** — when a web device reports `camera_port`, the panel shows a live MJPEG preview
-- **Camera cache (planned)** — low-res JPEG proxy (`view` / `icon`) for any Home Assistant
-  `camera.*` (including generic ESPHome / SCAM). Today that lives as a temporary standalone
-  integration (`nabla_camera_cache`); it will move into this package. See
-  [docs/CAMERA-CACHE.md](docs/CAMERA-CACHE.md).
+- **Camera Cache** — shared, on-demand 480px / 64×64 JPEGs for any selected
+  Home Assistant camera, configurable without restarting. See
+  [Camera Cache](docs/CAMERA-CACHE.md).
+
 
 YAML / Python domain and product name: **Nabla Control** (`nabla_control`).
 
@@ -84,6 +84,10 @@ phases; this release supports manual address updates, not roaming discovery.
 
 After restart, **Nabla Control** appears in the sidebar:
 
+- **Devices** tab: **Screens** previews or **Details** list with status, address and capabilities
+- **Cameras** tab: authenticated, shared JPEG views and thumbnails
+- **MQTT** tab: optional topic log, disabled until configured by an administrator
+- Hidden camera tabs stop requesting images; changing tabs does not disable an explicitly enabled MQTT logger
 - Device overview with live preview (mirror PNG or web MJPEG)
 - Status, kind (Mirror / Web), camera yes/no
 - **Open Nabla** for web devices

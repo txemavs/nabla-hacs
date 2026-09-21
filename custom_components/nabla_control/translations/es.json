@@ -2,7 +2,7 @@
   "title": "Nabla Control",
   "config": {
     "step": {
-      "user": {
+      "device": {
         "title": "Añadir dispositivo Nabla",
         "description": "Introduce la dirección de un dispositivo Nabla. No requiere reiniciar Home Assistant.",
         "data": {
@@ -11,11 +11,29 @@
           "kind": "Tipo de dispositivo",
           "poll_interval": "Intervalo de actualización (segundos)"
         }
+      },
+      "user": {
+        "title": "Nabla Control",
+        "menu_options": {
+          "device": "Dispositivo",
+          "camera_cache": "Cámaras"
+        }
+      },
+      "camera_cache": {
+        "title": "Camera Cache",
+        "description": "Imágenes compartidas bajo demanda. Sin capturas cuando nadie mira.",
+        "data": {
+          "cameras": "Cámaras",
+          "refresh_interval": "Intervalo mínimo (segundos)",
+          "max_stale": "Antigüedad máxima (segundos)",
+          "quality": "Calidad JPEG"
+        }
       }
     },
     "error": {
       "cannot_connect": "No se puede conectar con un dispositivo Nabla compatible.",
-      "invalid_host": "Introduce un nombre de host o IP sin URL ni puerto."
+      "invalid_host": "Introduce un nombre de host o IP sin URL ni puerto.",
+      "invalid_camera_settings": "Selecciona entre 1 y 32 cámaras y valores válidos."
     },
     "abort": {
       "already_configured": "Este dispositivo ya está configurado."
@@ -24,20 +42,25 @@
   "options": {
     "step": {
       "init": {
-        "title": "Ajustes del dispositivo",
-        "description": "Cambia la dirección conservando las tarjetas existentes.",
+        "title": "Ajustes",
+        "description": "Los cambios se aplican sin reiniciar Home Assistant.",
         "data": {
           "host": "Nombre de host o dirección IP",
           "name": "Nombre",
           "kind": "Tipo de dispositivo",
-          "poll_interval": "Intervalo de actualización (segundos)"
+          "poll_interval": "Intervalo de actualización (segundos)",
+          "cameras": "Cámaras",
+          "refresh_interval": "Intervalo mínimo (segundos)",
+          "max_stale": "Antigüedad máxima (segundos)",
+          "quality": "Calidad JPEG"
         }
       }
     },
     "error": {
       "cannot_connect": "No se puede conectar con un dispositivo Nabla compatible.",
       "invalid_host": "Introduce un nombre de host o IP sin URL ni puerto.",
-      "already_configured": "Esta dirección pertenece a otro dispositivo."
+      "already_configured": "Esta dirección pertenece a otro dispositivo.",
+      "invalid_camera_settings": "Selecciona entre 1 y 32 cámaras y valores válidos."
     }
   }
 }

@@ -2,7 +2,7 @@
   "title": "Nabla Control",
   "config": {
     "step": {
-      "user": {
+      "device": {
         "title": "Add Nabla device",
         "description": "Enter a reachable Nabla web or mirror device. No Home Assistant restart is needed.",
         "data": {
@@ -11,11 +11,29 @@
           "kind": "Device type",
           "poll_interval": "Refresh interval (seconds)"
         }
+      },
+      "user": {
+        "title": "Nabla Control",
+        "menu_options": {
+          "device": "Device",
+          "camera_cache": "Camera Cache"
+        }
+      },
+      "camera_cache": {
+        "title": "Camera Cache",
+        "description": "Shared images on demand. No capture when nobody is watching.",
+        "data": {
+          "cameras": "Cameras",
+          "refresh_interval": "Minimum interval (seconds)",
+          "max_stale": "Maximum stale age (seconds)",
+          "quality": "JPEG quality"
+        }
       }
     },
     "error": {
       "cannot_connect": "Cannot reach a compatible Nabla device.",
-      "invalid_host": "Enter a hostname or IP address without a URL or port."
+      "invalid_host": "Enter a hostname or IP address without a URL or port.",
+      "invalid_camera_settings": "Select 1–32 cameras and valid settings."
     },
     "abort": {
       "already_configured": "This device is already configured."
@@ -24,20 +42,25 @@
   "options": {
     "step": {
       "init": {
-        "title": "Device settings",
-        "description": "Change the address without changing existing dashboard references.",
+        "title": "Settings",
+        "description": "Changes apply without restarting Home Assistant.",
         "data": {
           "host": "Host or IP address",
           "name": "Name",
           "kind": "Device type",
-          "poll_interval": "Refresh interval (seconds)"
+          "poll_interval": "Refresh interval (seconds)",
+          "cameras": "Cameras",
+          "refresh_interval": "Minimum interval (seconds)",
+          "max_stale": "Maximum stale age (seconds)",
+          "quality": "JPEG quality"
         }
       }
     },
     "error": {
       "cannot_connect": "Cannot reach a compatible Nabla device.",
       "invalid_host": "Invalid hostname or IP address.",
-      "already_configured": "This address belongs to another entry."
+      "already_configured": "This address belongs to another entry.",
+      "invalid_camera_settings": "Select 1–32 cameras and valid settings."
     }
   }
 }

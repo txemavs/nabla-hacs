@@ -18,6 +18,7 @@ def async_register_websocket_handlers(hass: HomeAssistant) -> None:
     """Register WebSocket handlers for the Nabla Control panel."""
     websocket_api.async_register_command(hass, websocket_get_devices)
     websocket_api.async_register_command(hass, websocket_mqtt_log)
+    websocket_api.async_register_command(hass, websocket_cameras)
 
 
 @websocket_api.websocket_command(
@@ -76,3 +77,18 @@ async def websocket_mqtt_log(hass, connection, msg):
         connection.send_result(msg['id'], monitor.snapshot())
     except (ValueError, RuntimeError) as exc:
         connection.send_error(msg['id'], 'mqtt_log_error', str(exc))
+
+
+@websocket_api.websocket_command({vol.Required("type"): "nabla_control/cameras"})
+@callback
+def websocket_cameras(hass, connection, msg):
+    result = []
+    for entity_id, cache in hass.data[DOMAIN]["camera_cache"].caches.items():
+        if not connection.user.permissions.check_entity(entity_id, "read"):
+            continue
+        state = hass.states.get(entity_id)
+        result.append({"entity_id": entity_id,
+            "name": state.name if state else entity_id,
+            "interval": cache.interval, "generations": cache.generations,
+            "failures": cache.failures})
+    connection.send_result(msg["id"], result)

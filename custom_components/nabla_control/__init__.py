@@ -19,6 +19,7 @@ from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .mqtt_log import MqttLog
+from .camera import CameraManager, CAMERA_SCHEMA
 from .identity import http_host
 from .frame import decode_frame, image_to_png_bytes, infer_profile_from_size
 from .websocket import async_register_websocket_handlers
@@ -51,7 +52,8 @@ DEVICE_SCHEMA = vol.Schema({
 
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
-        vol.Required(CONF_DEVICES): vol.All(cv.ensure_list, [DEVICE_SCHEMA]),
+        vol.Optional("camera_cache"): CAMERA_SCHEMA,
+        vol.Optional(CONF_DEVICES, default=[]): vol.All(cv.ensure_list, [DEVICE_SCHEMA]),
     })
 }, extra=vol.ALLOW_EXTRA)
 
@@ -406,7 +408,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
         frontend_url_path=PANEL_URL_PATH,
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
-        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921access1",
+        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921cameras1",
         embed_iframe=False,
         require_admin=False,
     )
@@ -421,6 +423,9 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     monitor = MqttLog(hass)
     hass.data[DOMAIN]["mqtt_log"] = monitor
     await monitor.restore()
+    cameras = CameraManager(hass)
+    hass.data[DOMAIN]["camera_cache"] = cameras
+    cameras.register()
 
     hass.http.register_view(FrameImageView(devices))
 
@@ -455,7 +460,14 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             data=dict(device_conf),
         ))
 
+    camera_conf = config.get(DOMAIN, {}).get("camera_cache")
+    if camera_conf:
+        hass.async_create_task(hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_IMPORT},
+            data={"entry_type": "camera_cache", **camera_conf}))
+
     async def stop(_event):
+        await cameras.close()
         monitor.stop()
         for device in list(devices.values()):
             await device.stop_polling()
@@ -468,6 +480,10 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 async def async_setup_entry(hass, entry) -> bool:
     """Load one device without restarting the server or other devices."""
     data = {**entry.data, **entry.options}
+    if data.get("entry_type") == "camera_cache":
+        await hass.data[DOMAIN]["camera_cache"].configure(data)
+        entry.async_on_unload(entry.add_update_listener(_async_update_entry))
+        return True
     device = DeviceState(
         data[CONF_HOST], data.get(CONF_NAME, entry.title),
         data.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL),
@@ -495,6 +511,9 @@ async def _async_update_entry(hass, entry):
 
 async def async_unload_entry(hass, entry) -> bool:
     """Cancel polling and unload only this device's entities."""
+    if entry.data.get("entry_type") == "camera_cache":
+        await hass.data[DOMAIN]["camera_cache"].close()
+        return True
     if not await hass.config_entries.async_unload_platforms(entry, [Platform.BUTTON]):
         return False
     device = hass.data[DOMAIN]["entries"].pop(entry.entry_id)
