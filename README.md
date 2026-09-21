@@ -10,7 +10,6 @@ not from this Home Assistant component. From that project:
 > Device YAML supplies menus, content and actions. Shared components and profiles
 > own typography, spacing, borders, focus and supported presentation.
 
-See also [brand guidelines](https://github.com/txemavs/nabla-esp-ui/blob/main/docs/BRAND.md).
 **Nabla Control** is the Home Assistant side: mirror previews, Nabla web UI / camera
 devices, encoder actions, and the sidebar panel.
 
@@ -111,8 +110,7 @@ Domain remains `nabla_display` (e.g. `nabla_display.send_action`).
 
 ## Related projects
 
-- [Nabla ESP UI](https://github.com/txemavs/nabla-esp-ui) — on-device menus, mirror contract, brand
-- [Brand guidelines](https://github.com/txemavs/nabla-esp-ui/blob/main/docs/BRAND.md)
+- [Nabla ESP UI](https://github.com/txemavs/nabla-esp-ui) — on-device menus and mirror contract
 
 ---
 
