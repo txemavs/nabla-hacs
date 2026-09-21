@@ -84,7 +84,7 @@ phases; this release supports manual address updates, not roaming discovery.
 
 After restart, **Nabla Control** appears in the sidebar:
 
-- **Devices** tab: **Screens** previews or **Details** list with status, address and capabilities
+- **Devices** tab: Device Builder-style toolbar with name/address search, status filter and result count. **Details** opens a compact table with status, address, type, resolution and actions; **Screens** retains live previews.
 - **Cameras** tab: authenticated, shared JPEG views and thumbnails
 - **MQTT** tab: optional topic log, disabled until configured by an administrator
 - Hidden camera tabs stop requesting images; changing tabs does not disable an explicitly enabled MQTT logger
