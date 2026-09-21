@@ -1,19 +1,10 @@
 {
   "domain": "nabla_display",
-  "name": "Nabla Display",
-  "version": "0.2.0",
+  "name": "Nabla Control",
+  "version": "0.3.0",
   "documentation": "https://github.com/txemavs/nabla-hacs",
-  "codeowners": [
-    "@txemavs"
-  ],
-  "dependencies": [
-    "http",
-    "frontend",
-    "panel_custom",
-    "lovelace"
-  ],
+  "codeowners": ["@txemavs"],
+  "dependencies": ["http", "frontend", "panel_custom", "lovelace"],
   "iot_class": "local_polling",
-  "requirements": [
-    "Pillow>=10.0.0"
-  ]
+  "requirements": ["Pillow>=10.0.0"]
 }

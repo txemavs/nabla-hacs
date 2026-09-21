@@ -1,33 +1,23 @@
-# Nabla Display
+# Nabla Control
 
-View and control Nabla ESP-UI display mirrors in Home Assistant.
+Control and monitor Nabla devices from Home Assistant — mirror displays, Nabla web UI, and camera streams.
 
-## Features
+On-device menus are defined by device YAML and **[Nabla ESP UI](https://github.com/txemavs/nabla-esp-ui)**
+(“Device YAML supplies menus, content and actions”). This integration is the HA control surface.
 
-- Live display mirroring from ESP devices
-- Encoder control buttons (up/down/enter/back)
-- Lovelace card with pixelated rendering
-- **Management panel** in the sidebar to view all devices
-- **Add to dashboard** — assign cards to any Lovelace dashboard with one click
-- Service for automation integration
-- Fallback profile detection for legacy firmware
+Domain remains `nabla_display` for configuration and APIs.
 
 ## Quick Start
 
 ```yaml
-# configuration.yaml
 nabla_display:
   devices:
     - host: "10.10.10.204"
-      name: "My Display"
+      name: "Kit1"
+    - host: "10.10.10.251"
+      name: "Dashcam Web"
+      kind: web
+      poll_interval: 5.0
 ```
 
-After restart, open **Nabla Displays** from the sidebar to see your devices and add cards to dashboards.
-
-```yaml
-# Manual Lovelace card
-type: custom:nabla-display-card
-device_id: "10_10_10_204"
-```
-
-See [README](https://github.com/txemavs/nabla-hacs) for full documentation.
+After restart, open **Nabla Control** from the sidebar.
