@@ -1,4 +1,5 @@
-import "./mqtt-log.js?v=20260921access1";
+import "./mqtt-log.js?v=20260921cameras1";
+import "./cameras.js?v=20260921cameras1";
 // Nabla Control panel for Home Assistant (domain: nabla_control)
 // Sidebar listing configured Control devices (mirror displays, Nabla web UI, cameras)
 // with live preview and dashboard assignment.
@@ -14,12 +15,16 @@ class NablaPanel extends HTMLElement {
     this._selectedDevice = null;
     this._pollIntervals = new Map();
     this._wsConnection = null;
+    this._tab = "devices";
+    this._deviceView = "screens";
   }
 
   set hass(hass) {
     this._hass = hass;
     const monitor = this.shadowRoot.querySelector("nabla-mqtt-log");
     if (monitor) monitor.hass = hass;
+    const cameras = this.shadowRoot.querySelector("nabla-cameras");
+    if(cameras)cameras.hass=hass;
     if (!this._initialized) {
       this._initialized = true;
       this._render();
@@ -72,6 +77,15 @@ class NablaPanel extends HTMLElement {
   _render() {
     this.shadowRoot.innerHTML = `
       <style>
+        [hidden]{display:none!important}
+        .tabs,.view-toggle{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+        .tabs button,.view-toggle button{font:inherit;padding:10px 16px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color);cursor:pointer}
+        button[aria-selected="true"],button[aria-pressed="true"]{border-color:var(--primary-color);color:var(--primary-color)}
+        .device-grid.details{grid-template-columns:1fr}
+        .details .device-preview,.details .device-encoder{display:none}
+        .details .device-info-row{gap:12px;min-width:150px}
+        .details .device-info{display:flex;flex-wrap:wrap;gap:12px 32px}
+
         :host {
           display: block;
           height: 100%;
@@ -521,17 +535,28 @@ class NablaPanel extends HTMLElement {
             <svg class="header-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2.4 6.4574373H21.6L12 23.0851253Z M5.664 8.341908L12 19.3161827L18.336 8.341908Z"/></svg>
             Nabla Control
           </h1>
-          <button class="refresh-btn" id="mqtt-open">MQTT</button>
-          <a class="refresh-btn" href="/config/integrations/integration/nabla_control">Gestionar dispositivos</a>
+
+          <a class="refresh-btn" href="/config/integrations/integration/nabla_control">Configurar</a>
           <button class="refresh-btn" id="refresh-btn">
             <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/></svg>
-            Refresh
+            Actualizar
           </button>
         </div>
-        <nabla-mqtt-log></nabla-mqtt-log>
+        <nav class="tabs" role="tablist" aria-label="Nabla Control">
+          <button id="tab-devices" data-tab="devices" role="tab" aria-controls="devices-panel" aria-selected="true">Dispositivos</button>
+          <button id="tab-cameras" data-tab="cameras" role="tab" aria-controls="cameras-panel" aria-selected="false">Cámaras</button>
+          <button id="tab-mqtt" data-tab="mqtt" role="tab" aria-controls="mqtt-panel" aria-selected="false">MQTT</button>
+        </nav>
+        <section id="cameras-panel" role="tabpanel" aria-labelledby="tab-cameras" hidden><nabla-cameras></nabla-cameras></section>
+        <section id="mqtt-panel" role="tabpanel" aria-labelledby="tab-mqtt" hidden><nabla-mqtt-log></nabla-mqtt-log></section>
+        <section id="devices-panel" role="tabpanel" aria-labelledby="tab-devices">
+        <div class="view-toggle" aria-label="Vista de dispositivos">
+          <button data-view="screens" aria-pressed="true">Pantallas</button><button data-view="details" aria-pressed="false">Detalles</button>
+        </div>
         <div class="device-grid" id="device-grid">
           <!-- Devices rendered here -->
         </div>
+        </section>
       </div>
 
       <!-- Live View Modal -->
@@ -601,16 +626,21 @@ class NablaPanel extends HTMLElement {
     `;
 
     this.shadowRoot.querySelector("nabla-mqtt-log").hass = this._hass;
+    this.shadowRoot.querySelector("nabla-cameras").hass = this._hass;
     this._setupEventListeners();
   }
 
   _setupEventListeners() {
-    this.shadowRoot.getElementById("mqtt-open").addEventListener("click", () => {
-      this.shadowRoot.querySelector("nabla-mqtt-log").open();
+    this.shadowRoot.querySelectorAll('[data-tab]').forEach(button=>button.onclick=()=>this._selectTab(button.dataset.tab));
+    this.shadowRoot.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>{
+      this._deviceView=button.dataset.view;
+      this.shadowRoot.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+      this._renderDeviceList();
     });
     // Refresh button
     this.shadowRoot.getElementById("refresh-btn").addEventListener("click", () => {
       this._loadData();
+      if(this._tab==="cameras")this.shadowRoot.querySelector("nabla-cameras").active=true;
     });
 
     // Live modal
@@ -647,15 +677,37 @@ class NablaPanel extends HTMLElement {
     });
   }
 
+  _stopPreviews() {
+    this._pollIntervals.forEach(clearInterval);this._pollIntervals.clear();
+    this.shadowRoot.querySelectorAll('#device-grid img').forEach(img=>{
+      if(img.src.startsWith('blob:'))URL.revokeObjectURL(img.src);
+      img.removeAttribute('src');
+    });
+  }
+
+  _selectTab(tab) {
+    this._tab=tab;
+    this._closeLiveModal();
+    this.shadowRoot.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===tab)));
+    for(const name of ['devices','cameras','mqtt'])this.shadowRoot.getElementById(name+'-panel').hidden=name!==tab;
+    this.shadowRoot.querySelector('nabla-cameras').active=tab==='cameras';
+    const mqtt=this.shadowRoot.querySelector('nabla-mqtt-log');
+    if(tab==='mqtt')mqtt.open();else mqtt.close();
+    this._renderDeviceList();
+  }
+
   _renderDeviceList() {
+    this._stopPreviews();
     const grid = this.shadowRoot.getElementById("device-grid");
+    grid.classList.toggle("details",this._deviceView==="details");
+    const previews=this._tab==="devices"&&this._deviceView==="screens";
 
     if (this._devices.length === 0) {
       grid.innerHTML = `
         <div class="empty-state">
           <svg viewBox="0 0 24 24"><path fill="currentColor" d="M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z"/></svg>
           <h3>No Nabla Control devices configured</h3>
-          <p>Add Control devices to your configuration.yaml under nabla_control.</p>
+          <p>Añade dispositivos desde Configurar → Añadir entrada.</p>
         </div>
       `;
       return;
@@ -668,7 +720,7 @@ class NablaPanel extends HTMLElement {
           const openUrl = device.open_url || device.web_url || `http://${device.host}/`;
           let previewHtml;
           if (isWeb) {
-            if (device.has_camera && device.camera_url) {
+            if (previews && device.has_camera && device.camera_url) {
               previewHtml = `<img id="preview-${device.device_id}" class="mjpeg" alt="${this._escapeHtml(device.name || device.device_id)}" src="${this._escapeHtml(device.camera_url)}" />`;
             } else if (device.available) {
               previewHtml = '<span class="web-placeholder">Nabla Web</span>';
@@ -700,7 +752,7 @@ class NablaPanel extends HTMLElement {
           </div>
           <div class="device-info-row">
             <span class="device-info-label">Format</span>
-            <span class="device-info-value">${device.format}</span>
+            <span class="device-info-value">${this._escapeHtml(device.format || "—")}</span>
           </div>
           <div class="device-info-row">
             <span class="device-info-label">Input</span>
@@ -800,7 +852,7 @@ class NablaPanel extends HTMLElement {
     });
 
     // Start polling previews
-    this._startPreviewPolling();
+    if(previews)this._startPreviewPolling();
   }
 
 
@@ -817,6 +869,7 @@ class NablaPanel extends HTMLElement {
         return;
       }
       const blob = await resp.blob();
+      if(!imgEl.isConnected || (imgEl.id.startsWith("preview-") && (this._tab!=="devices"||this._deviceView!=="screens")))return;
       const old = imgEl.src;
       imgEl.src = URL.createObjectURL(blob);
       if (old && old.startsWith("blob:")) URL.revokeObjectURL(old);
@@ -1103,6 +1156,7 @@ show_controls: ${this._selectedDevice.has_input}`;
   }
 
   disconnectedCallback() {
+    this._stopPreviews();
     this._pollIntervals.forEach((interval) => clearInterval(interval));
     this._pollIntervals.clear();
     if (this._liveInterval) {

@@ -1,0 +1,3 @@
+Pillow>=10.0.0
+aiohttp>=3.9
+voluptuous>=0.13

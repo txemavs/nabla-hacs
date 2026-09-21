@@ -42,6 +42,7 @@ class NablaMqttLog extends HTMLElement {
     };
     q('filter').oninput = () => this.renderRows();
   }
+  close() { clearInterval(this._timer); this.shadowRoot.querySelector("details").open=false; }
   open() {
     const details = this.shadowRoot.querySelector('details');
     details.open = true;
