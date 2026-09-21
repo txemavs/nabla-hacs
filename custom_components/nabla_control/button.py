@@ -13,10 +13,10 @@ DOMAIN = "nabla_control"
 _LOGGER = logging.getLogger(__name__)
 
 ACTIONS = [
-    ("up", "Up", "mdi:arrow-up"),
-    ("down", "Down", "mdi:arrow-down"),
-    ("enter", "Enter", "mdi:check"),
-    ("back", "Back", "mdi:arrow-left"),
+    ("up", "Up", "mdi:arrow-up", False),
+    ("down", "Down", "mdi:arrow-down", False),
+    ("enter", "Enter", "mdi:check", False),
+    ("back", "Back", "mdi:arrow-left", True),
 ]
 
 
@@ -24,20 +24,28 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Create controls immediately; availability follows negotiated capability."""
     device = hass.data[DOMAIN]["entries"][entry.entry_id]
     async_add_entities([
-        NablaControlButton(device, action, name, icon)
-        for action, name, icon in ACTIONS
+        NablaControlButton(device, action, name, icon, disabled_default)
+        for action, name, icon, disabled_default in ACTIONS
     ])
 
 
 class NablaControlButton(ButtonEntity):
     """Button entity for a Nabla Control encoder action."""
 
-    def __init__(self, device, action: str, action_name: str, icon: str):
+    def __init__(
+        self,
+        device,
+        action: str,
+        action_name: str,
+        icon: str,
+        disabled_default: bool,
+    ):
         self._device = device
         self._action = action
         self._attr_name = f"{device.name} {action_name}"
         self._attr_unique_id = f"nabla_control_{device.device_id}_{action}"
         self._attr_icon = icon
+        self._attr_entity_registry_enabled_default = not disabled_default
         self._attr_device_info = {
             "identifiers": {(DOMAIN, device.device_id)},
             "name": device.name,
