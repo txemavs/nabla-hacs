@@ -1,3 +1,4 @@
+import "./mqtt-log.js";
 // Nabla Control panel for Home Assistant (domain: nabla_control)
 // Sidebar listing configured Control devices (mirror displays, Nabla web UI, cameras)
 // with live preview and dashboard assignment.
@@ -522,6 +523,7 @@ class NablaPanel extends HTMLElement {
             Refresh
           </button>
         </div>
+        <nabla-mqtt-log></nabla-mqtt-log>
         <div class="device-grid" id="device-grid">
           <!-- Devices rendered here -->
         </div>
@@ -593,6 +595,7 @@ class NablaPanel extends HTMLElement {
       </div>
     `;
 
+    this.shadowRoot.querySelector("nabla-mqtt-log").hass = this._hass;
     this._setupEventListeners();
   }
 
