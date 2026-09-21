@@ -1,6 +1,6 @@
-// Nabla Display Management Panel for Home Assistant
-// Sidebar panel listing all configured nabla_display devices with live preview
-// and dashboard assignment functionality.
+// Nabla Control panel for Home Assistant (domain: nabla_display)
+// Sidebar listing configured Control devices (mirror displays, Nabla web UI, cameras)
+// with live preview and dashboard assignment.
 
 class NablaPanel extends HTMLElement {
   constructor() {
@@ -159,21 +159,76 @@ class NablaPanel extends HTMLElement {
           display: flex;
           justify-content: center;
           align-items: center;
-          padding: 16px;
+          padding: 8px;
           background: #1a1a1a;
-          min-height: 120px;
+          height: 220px;
+          width: 100%;
+          box-sizing: border-box;
         }
         .device-preview img {
-          max-width: 100%;
-          max-height: 200px;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
           image-rendering: pixelated;
           image-rendering: crisp-edges;
           border: 1px solid #333;
+          background: #000;
         }
         .device-preview .no-preview {
           color: #666;
           font-size: 14px;
         }
+        .device-preview .web-placeholder {
+          color: #9e9e9e;
+          font-size: 16px;
+          text-align: center;
+        }
+        .device-preview img.mjpeg {
+          image-rendering: auto;
+        }
+        .action-btn.open-nabla {
+          background: #00897b;
+          color: #fff;
+          border-color: #00897b;
+        }
+        .action-btn.open-nabla:hover {
+          filter: brightness(1.08);
+        }
+        
+        .device-encoder {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 12px 4px;
+          background: var(--secondary-background-color, #f5f5f5);
+          border-bottom: 1px solid var(--divider-color, #e0e0e0);
+        }
+        .encoder-btn {
+          width: 44px;
+          height: 44px;
+          border: none;
+          border-radius: 50%;
+          background: var(--primary-color, #03a9f4);
+          color: #fff;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: filter 0.15s, transform 0.1s;
+        }
+        .encoder-btn:hover {
+          filter: brightness(1.1);
+        }
+        .encoder-btn:active {
+          transform: scale(0.94);
+        }
+        .encoder-btn svg {
+          width: 22px;
+          height: 22px;
+          fill: currentColor;
+        }
+
         .device-info {
           padding: 12px 16px;
           border-bottom: 1px solid var(--divider-color, #e0e0e0);
@@ -298,7 +353,9 @@ class NablaPanel extends HTMLElement {
           text-align: center;
         }
         .live-view-container img {
-          max-width: 100%;
+          width: 100%;
+          max-height: 70vh;
+          object-fit: contain;
           image-rendering: pixelated;
           image-rendering: crisp-edges;
           border: 2px solid #333;
@@ -457,7 +514,7 @@ class NablaPanel extends HTMLElement {
         <div class="header">
           <h1>
             <svg class="header-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z"/></svg>
-            Nabla Displays
+            Nabla Control
           </h1>
           <button class="refresh-btn" id="refresh-btn">
             <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/></svg>
@@ -508,7 +565,7 @@ class NablaPanel extends HTMLElement {
           </div>
           <div class="modal-body">
             <div id="assign-message"></div>
-            <p style="margin-top:0;">Select a dashboard to add the Nabla Display card:</p>
+            <p style="margin-top:0;">Select a dashboard to add the Nabla Control card:</p>
             <ul class="dashboard-list" id="dashboard-list">
               <!-- Dashboards rendered here -->
             </ul>
@@ -585,8 +642,8 @@ class NablaPanel extends HTMLElement {
       grid.innerHTML = `
         <div class="empty-state">
           <svg viewBox="0 0 24 24"><path fill="currentColor" d="M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z"/></svg>
-          <h3>No Nabla Displays configured</h3>
-          <p>Add devices to your configuration.yaml under nabla_display.</p>
+          <h3>No Nabla Control devices configured</h3>
+          <p>Add Control devices to your configuration.yaml under nabla_display.</p>
         </div>
       `;
       return;
@@ -594,27 +651,36 @@ class NablaPanel extends HTMLElement {
 
     grid.innerHTML = this._devices
       .map(
-        (device) => `
-      <div class="device-card" data-device-id="${device.device_id}">
-        <div class="device-header">
-          <span class="device-name">${this._escapeHtml(device.name)}</span>
-          <span class="device-status ${device.available ? "online" : "offline"}">
-            ${device.available ? "Online" : "Offline"}
-          </span>
-        </div>
-        <div class="device-preview">
-          ${
-            device.available
-              ? `<img src="/api/nabla_display/${device.device_id}/frame?t=${Date.now()}" 
-                     alt="${this._escapeHtml(device.name)}" 
-                     id="preview-${device.device_id}" />`
-              : '<span class="no-preview">No preview available</span>'
+        (device) => {
+          const isWeb = device.kind === "web";
+          const openUrl = device.open_url || device.web_url || `http://${device.host}/`;
+          let previewHtml;
+          if (isWeb) {
+            if (device.has_camera && device.camera_url) {
+              previewHtml = `<img id="preview-${device.device_id}" class="mjpeg" alt="${this._escapeHtml(device.name || device.device_id)}" src="${this._escapeHtml(device.camera_url)}" />`;
+            } else if (device.available) {
+              previewHtml = '<span class="web-placeholder">Nabla Web</span>';
+            } else {
+              previewHtml = '<span class="no-preview">No preview available</span>';
+            }
+          } else if (device.available) {
+            previewHtml = `<img id="preview-${device.device_id}" alt="${this._escapeHtml(device.name || device.device_id)}" />`;
+          } else {
+            previewHtml = '<span class="no-preview">No preview available</span>';
           }
-        </div>
-        <div class="device-info">
+
+          const infoExtra = isWeb
+            ? `<div class="device-info-row">
+            <span class="device-info-label">Kind</span>
+            <span class="device-info-value">Web</span>
+          </div>
           <div class="device-info-row">
-            <span class="device-info-label">Host</span>
-            <span class="device-info-value">${this._escapeHtml(device.host)}</span>
+            <span class="device-info-label">Camera</span>
+            <span class="device-info-value">${device.has_camera ? "Yes" : "No"}</span>
+          </div>`
+            : `<div class="device-info-row">
+            <span class="device-info-label">Kind</span>
+            <span class="device-info-value">Mirror</span>
           </div>
           <div class="device-info-row">
             <span class="device-info-label">Resolution</span>
@@ -627,20 +693,69 @@ class NablaPanel extends HTMLElement {
           <div class="device-info-row">
             <span class="device-info-label">Input</span>
             <span class="device-info-value">${device.has_input ? "Yes" : "No"}</span>
-          </div>
-        </div>
-        <div class="device-actions">
+          </div>`;
+
+          const actions = isWeb
+            ? `<button class="action-btn open-nabla" data-action="open" data-device-id="${device.device_id}" data-open-url="${this._escapeHtml(openUrl)}">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"/></svg>
+            Open Nabla
+          </button>
           <button class="action-btn" data-action="live" data-device-id="${device.device_id}">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/></svg>
+            Live View
+          </button>`
+            : `<button class="action-btn" data-action="live" data-device-id="${device.device_id}">
             <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/></svg>
             Live View
           </button>
           <button class="action-btn primary" data-action="assign" data-device-id="${device.device_id}">
             <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
             Add to Dashboard
+          </button>`;
+
+          return `
+      <div class="device-card" data-device-id="${device.device_id}">
+        <div class="device-header">
+          <span class="device-name">${this._escapeHtml(device.name)}</span>
+          <span class="device-status ${device.available ? "online" : "offline"}">
+            ${device.available ? "Online" : "Offline"}
+          </span>
+        </div>
+        <div class="device-preview">
+          ${previewHtml}
+        </div>
+
+        ${
+          !isWeb && device.has_input
+            ? `<div class="device-encoder" data-device-id="${device.device_id}">
+          <button type="button" class="encoder-btn" data-encoder="up" data-device-id="${device.device_id}" title="Up">
+            <svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
           </button>
+          <button type="button" class="encoder-btn" data-encoder="down" data-device-id="${device.device_id}" title="Down">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+          </button>
+          <button type="button" class="encoder-btn" data-encoder="enter" data-device-id="${device.device_id}" title="Enter">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          </button>
+          <button type="button" class="encoder-btn" data-encoder="back" data-device-id="${device.device_id}" title="Back">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          </button>
+        </div>`
+            : ""
+        }
+        <div class="device-info">
+          <div class="device-info-row">
+            <span class="device-info-label">Host</span>
+            <span class="device-info-value">${this._escapeHtml(device.host)}</span>
+          </div>
+          ${infoExtra}
+        </div>
+        <div class="device-actions">
+          ${actions}
         </div>
       </div>
-    `
+    `;
+        }
       )
       .join("");
 
@@ -650,10 +765,24 @@ class NablaPanel extends HTMLElement {
         const deviceId = btn.dataset.deviceId;
         const action = btn.dataset.action;
         const device = this._devices.find((d) => d.device_id === deviceId);
-        if (action === "live") {
+        if (action === "open") {
+          const url = btn.dataset.openUrl || (device && (device.open_url || device.web_url)) || (device && `http://${device.host}/`);
+          if (url) window.open(url, "_blank");
+        } else if (action === "live") {
           this._openLiveModal(device);
         } else if (action === "assign") {
           this._openAssignModal(device);
+        }
+      });
+    });
+
+    grid.querySelectorAll(".encoder-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const deviceId = btn.dataset.deviceId;
+        const action = btn.dataset.encoder;
+        if (deviceId && action) {
+          this._sendAction(deviceId, action);
         }
       });
     });
@@ -662,21 +791,46 @@ class NablaPanel extends HTMLElement {
     this._startPreviewPolling();
   }
 
+
+  async _loadAuthenticatedFrame(imgEl, deviceId) {
+    if (!imgEl || !this._hass || !deviceId) return;
+    try {
+      const url = `/api/nabla_display/${deviceId}/frame?t=${Date.now()}`;
+      const resp = await fetch(url, {
+        headers: { Authorization: `Bearer ${this._hass.auth.data.access_token}` },
+        cache: "no-store",
+      });
+      if (!resp.ok) {
+        imgEl.removeAttribute("src");
+        return;
+      }
+      const blob = await resp.blob();
+      const old = imgEl.src;
+      imgEl.src = URL.createObjectURL(blob);
+      if (old && old.startsWith("blob:")) URL.revokeObjectURL(old);
+    } catch (e) {
+      console.warn("Nabla frame load failed", deviceId, e);
+    }
+  }
+
   _startPreviewPolling() {
     // Clear existing intervals
     this._pollIntervals.forEach((interval) => clearInterval(interval));
     this._pollIntervals.clear();
 
-    // Poll each device's preview
+    // Poll each mirror device's preview (web MJPEG uses camera_url as img.src)
     this._devices.forEach((device) => {
-      if (device.available) {
+      if (device.available && device.kind !== "web") {
         const interval = setInterval(() => {
           const img = this.shadowRoot.getElementById(`preview-${device.device_id}`);
           if (img) {
-            img.src = `/api/nabla_display/${device.device_id}/frame?t=${Date.now()}`;
+            this._loadAuthenticatedFrame(img, device.device_id);
           }
         }, 2000);
         this._pollIntervals.set(device.device_id, interval);
+        // Initial load
+        const img0 = this.shadowRoot.getElementById(`preview-${device.device_id}`);
+        if (img0) this._loadAuthenticatedFrame(img0, device.device_id);
       }
     });
   }
@@ -690,16 +844,34 @@ class NablaPanel extends HTMLElement {
     const info = this.shadowRoot.getElementById("live-info");
 
     title.textContent = `Live View - ${device.name}`;
-    frame.src = `/api/nabla_display/${device.device_id}/frame?t=${Date.now()}`;
+    controls.style.display = device.has_input && device.kind !== "web" ? "flex" : "none";
+
+    if (device.kind === "web") {
+      const openUrl = device.open_url || device.web_url || `http://${device.host}/`;
+      if (device.has_camera && device.camera_url) {
+        frame.removeAttribute("style");
+        frame.style.maxWidth = "100%";
+        frame.style.width = "640px";
+        frame.src = device.camera_url;
+        info.textContent = `Nabla Web · Camera MJPEG · ${openUrl}`;
+      } else {
+        frame.removeAttribute("src");
+        info.textContent = `Nabla Web · No camera · ${openUrl}`;
+        window.open(openUrl, "_blank");
+      }
+      modal.classList.add("active");
+      return;
+    }
+
+    this._loadAuthenticatedFrame(frame, device.device_id);
     frame.style.width = `${Math.min(device.width * 3, 480)}px`;
-    controls.style.display = device.has_input ? "flex" : "none";
     info.textContent = `${device.width}×${device.height} ${device.format}`;
 
     modal.classList.add("active");
 
     // Start live polling
     this._liveInterval = setInterval(() => {
-      frame.src = `/api/nabla_display/${device.device_id}/frame?t=${Date.now()}`;
+      this._loadAuthenticatedFrame(frame, device.device_id);
     }, 500);
   }
 
@@ -710,6 +882,10 @@ class NablaPanel extends HTMLElement {
     if (this._liveInterval) {
       clearInterval(this._liveInterval);
       this._liveInterval = null;
+    }
+    const frame = this.shadowRoot.getElementById("live-frame");
+    if (frame) {
+      frame.removeAttribute("src");
     }
   }
 
