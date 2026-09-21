@@ -1,4 +1,4 @@
-// Nabla Control panel for Home Assistant (domain: nabla_display)
+// Nabla Control panel for Home Assistant (domain: nabla_control)
 // Sidebar listing configured Control devices (mirror displays, Nabla web UI, cameras)
 // with live preview and dashboard assignment.
 
@@ -41,7 +41,7 @@ class NablaPanel extends HTMLElement {
     if (!this._hass) return;
     try {
       this._devices = await this._hass.callWS({
-        type: "nabla_display/devices",
+        type: "nabla_control/devices",
       });
     } catch (e) {
       console.error("Failed to load nabla devices:", e);
@@ -643,7 +643,7 @@ class NablaPanel extends HTMLElement {
         <div class="empty-state">
           <svg viewBox="0 0 24 24"><path fill="currentColor" d="M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z"/></svg>
           <h3>No Nabla Control devices configured</h3>
-          <p>Add Control devices to your configuration.yaml under nabla_display.</p>
+          <p>Add Control devices to your configuration.yaml under nabla_control.</p>
         </div>
       `;
       return;
@@ -795,7 +795,7 @@ class NablaPanel extends HTMLElement {
   async _loadAuthenticatedFrame(imgEl, deviceId) {
     if (!imgEl || !this._hass || !deviceId) return;
     try {
-      const url = `/api/nabla_display/${deviceId}/frame?t=${Date.now()}`;
+      const url = `/api/nabla_control/${deviceId}/frame?t=${Date.now()}`;
       const resp = await fetch(url, {
         headers: { Authorization: `Bearer ${this._hass.auth.data.access_token}` },
         cache: "no-store",
@@ -892,7 +892,7 @@ class NablaPanel extends HTMLElement {
   async _sendAction(deviceId, action) {
     if (!this._hass) return;
     try {
-      await this._hass.callService("nabla_display", "send_action", {
+      await this._hass.callService("nabla_control", "send_action", {
         device_id: deviceId,
         action: action,
       });
@@ -983,7 +983,7 @@ class NablaPanel extends HTMLElement {
     const preview = this.shadowRoot.getElementById("card-preview");
     if (!this._selectedDevice) return;
 
-    const yaml = `type: custom:nabla-display-card
+    const yaml = `type: custom:nabla-control-card
 device_id: "${this._selectedDevice.device_id}"
 name: "${this._selectedDevice.name}"
 poll_interval: 1000
@@ -1008,7 +1008,7 @@ show_controls: ${this._selectedDevice.has_input}`;
 
     // Build the card config
     const cardConfig = {
-      type: "custom:nabla-display-card",
+      type: "custom:nabla-control-card",
       device_id: this._selectedDevice.device_id,
       name: this._selectedDevice.name,
       poll_interval: 1000,

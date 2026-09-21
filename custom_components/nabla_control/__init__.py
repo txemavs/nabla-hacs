@@ -1,4 +1,4 @@
-# Home Assistant custom component for Nabla Control (domain: nabla_display).
+# Home Assistant custom component for Nabla Control (domain: nabla_control).
 # Polls ESP mirror devices for display frames and Nabla web UI devices for state.
 # See docs/platform/DISPLAY-MIRROR-CONTRACT.md for the HTTP contract.
 
@@ -22,7 +22,7 @@ from .websocket import async_register_websocket_handlers
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = "nabla_display"
+DOMAIN = "nabla_control"
 
 CONF_DEVICES = "devices"
 CONF_HOST = "host"
@@ -381,7 +381,7 @@ class DeviceState:
 
 PANEL_TITLE = "Nabla Control"
 PANEL_ICON = "mdi:monitor"
-PANEL_URL_PATH = "nabla-displays"
+PANEL_URL_PATH = "nabla-control"
 PANEL_FRONTEND_URL = f"/{DOMAIN}_panel"
 
 
@@ -399,7 +399,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
         frontend_url_path=PANEL_URL_PATH,
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
-        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921web1",
+        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921ctrl1",
         embed_iframe=False,
         require_admin=False,
     )
@@ -408,7 +408,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """Set up the Nabla Control integration (domain nabla_display)."""
+    """Set up the Nabla Control integration (domain nabla_control)."""
     conf = config.get(DOMAIN)
     if not conf:
         return True
@@ -435,7 +435,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     await async_register_panel(hass)
 
     async def handle_send_action(call: ServiceCall):
-        """Handle nabla_display.send_action service call."""
+        """Handle nabla_control.send_action service call."""
         device_id = call.data.get("device_id")
         action = call.data.get("action")
 
@@ -467,8 +467,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 class FrameImageView(HomeAssistantView):
     """HTTP view serving device frame images (mirror PNG only)."""
 
-    url = "/api/nabla_display/{device_id}/frame"
-    name = "api:nabla_display:frame"
+    url = "/api/nabla_control/{device_id}/frame"
+    name = "api:nabla_control:frame"
     requires_auth = True
 
     def __init__(self, devices: dict[str, DeviceState]):
@@ -487,7 +487,7 @@ class FrameImageView(HomeAssistantView):
         if device.kind == KIND_WEB:
             return web.Response(
                 status=503,
-                text="Web device: use camera_url / open_url from nabla_display/devices",
+                text="Web device: use camera_url / open_url from nabla_control/devices",
             )
 
         if not device.available or device.last_png is None:

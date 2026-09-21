@@ -1,6 +1,6 @@
 send_action:
   name: Send Action
-  description: Send an encoder action to a Nabla Display device.
+  description: Send an encoder action to a Nabla Control device.
   fields:
     device_id:
       name: Device ID

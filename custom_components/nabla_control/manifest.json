@@ -1,7 +1,7 @@
 {
-  "domain": "nabla_display",
+  "domain": "nabla_control",
   "name": "Nabla Control",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "documentation": "https://github.com/txemavs/nabla-hacs",
   "codeowners": ["@txemavs"],
   "dependencies": ["http", "frontend", "panel_custom", "lovelace"],
