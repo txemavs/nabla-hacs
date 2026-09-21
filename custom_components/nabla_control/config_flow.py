@@ -16,6 +16,7 @@ def schema(data):
     return vol.Schema({
         vol.Required("host", default=data.get("host", "")): str,
         vol.Optional("name", default=data.get("name", "Nabla device")): str,
+        vol.Optional("follow_source", default=data.get("follow_source", False)): bool,
         vol.Optional("kind", default=data.get("kind", "auto")): vol.In(["auto", "mirror", "web"]),
         vol.Optional("poll_interval", default=data.get("poll_interval", 1.0)):
             vol.All(vol.Coerce(float), vol.Range(min=0.2, max=30)),
@@ -63,6 +64,22 @@ class NablaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except ValueError:
                 errors["host"] = "invalid_host"
         return self.async_show_form(step_id="device", data_schema=schema(user_input or {}), errors=errors)
+
+    async def async_step_integration_discovery(self, discovery_info):
+        source_id = discovery_info["source_entry_id"]
+        manager = self.hass.data[DOMAIN]["discovery"]
+        source = manager.sources().get(source_id)
+        if not source:
+            return self.async_abort(reason="cannot_connect")
+        await self.async_set_unique_id("esphome:" + source_id)
+        self._abort_if_unique_id_configured()
+        if duplicate_host(self.hass, source["host"]):
+            return self.async_abort(reason="already_configured")
+        kind = await manager.probe(source["host"])
+        if not kind:
+            return self.async_abort(reason="cannot_connect")
+        return self.async_create_entry(title=source["name"], data={**source,
+            "device_id": uuid4().hex, "kind": kind, "poll_interval": 1.0, "follow_source": True})
 
     async def async_step_import(self, user_input):
         if user_input.get("entry_type") == "camera_cache":

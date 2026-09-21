@@ -19,6 +19,7 @@ from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .mqtt_log import MqttLog
+from .discovery import Discovery
 from .camera import CameraManager, CAMERA_SCHEMA
 from .identity import http_host
 from .frame import decode_frame, image_to_png_bytes, infer_profile_from_size
@@ -408,7 +409,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
         frontend_url_path=PANEL_URL_PATH,
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
-        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921table1",
+        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921discovery1",
         embed_iframe=False,
         require_admin=False,
     )
@@ -426,6 +427,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     cameras = CameraManager(hass)
     hass.data[DOMAIN]["camera_cache"] = cameras
     cameras.register()
+    discovery = Discovery(hass)
+    hass.data[DOMAIN]["discovery"] = discovery
 
     hass.http.register_view(FrameImageView(devices))
 
@@ -467,6 +470,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             data={"entry_type": "camera_cache", **camera_conf}))
 
     async def stop(_event):
+        await discovery.close()
         await cameras.close()
         monitor.stop()
         for device in list(devices.values()):

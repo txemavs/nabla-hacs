@@ -9,7 +9,8 @@
           "host": "Nombre de host o dirección IP",
           "name": "Nombre",
           "kind": "Tipo de dispositivo",
-          "poll_interval": "Intervalo de actualización (segundos)"
+          "poll_interval": "Intervalo de actualización (segundos)",
+          "follow_source": "Seguir dirección de ESPHome (solo dispositivos vinculados)"
         }
       },
       "user": {
@@ -36,7 +37,8 @@
       "invalid_camera_settings": "Selecciona entre 1 y 32 cámaras y valores válidos."
     },
     "abort": {
-      "already_configured": "Este dispositivo ya está configurado."
+      "already_configured": "Este dispositivo ya está configurado.",
+      "cannot_connect": "Device is unavailable"
     }
   },
   "options": {
@@ -52,7 +54,8 @@
           "cameras": "Cámaras",
           "refresh_interval": "Intervalo mínimo (segundos)",
           "max_stale": "Antigüedad máxima (segundos)",
-          "quality": "Calidad JPEG"
+          "quality": "Calidad JPEG",
+          "follow_source": "Seguir dirección de ESPHome (solo dispositivos vinculados)"
         }
       }
     },

@@ -61,9 +61,11 @@ entries appear, then remove that YAML section: leaving it in place will import
 a deleted device again on the next boot. Existing entries are not overwritten
 by old YAML values.
 
-New devices receive a persistent local ID. Automatic hardware identity,
-discovery across subnets, MQTT announcements and remote touch are next
-phases; this release supports manual address updates, not roaming discovery.
+New devices receive a persistent local ID. **Search new devices** finds compatible
+endpoints already registered with HA’s ESPHome integration. **Link IP** can follow
+address changes known to that integration without changing dashboard references.
+See [discovery and its limits](docs/DISCOVERY.md). Firmware identity, MQTT
+announcements across subnets and remote touch remain separate next phases.
 
 ### Options
 

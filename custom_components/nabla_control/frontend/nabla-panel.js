@@ -550,6 +550,8 @@ class NablaPanel extends HTMLElement {
         .status-filter{font-size:13px;color:var(--secondary-text-color)}
         .status-filter select{font:inherit;padding:10px;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:5px}
         .add-device{margin-left:auto;text-decoration:none}
+        #discovery-results{margin-top:16px;padding:16px;border:1px solid var(--divider-color);border-radius:8px}
+        .discovery-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0}.discovery-row .action-btn{flex:none}
         .device-count{font-size:13px;color:var(--secondary-text-color);margin:14px 0}
         .device-grid.details{display:block;overflow-x:auto;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color)}
         .device-table{border-collapse:collapse;width:100%;font-size:14px;text-align:left;white-space:nowrap}
@@ -593,8 +595,10 @@ class NablaPanel extends HTMLElement {
             <button data-view="details" aria-pressed="true" title="Tabla de detalles"><span aria-hidden="true">☷</span> Detalles</button>
           </div>
           <label class="status-filter">Estado <select id="device-status"><option value="all">Todos</option><option value="online">Conectados</option><option value="offline">Desconectados</option></select></label>
+          <button class="refresh-btn" id="discover-devices">Buscar nuevos</button>
           <a class="refresh-btn add-device" href="/config/integrations/integration/nabla_control"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg> Añadir dispositivo</a>
         </div>
+        <section id="discovery-results" aria-label="Dispositivos encontrados" hidden></section>
         <p id="device-count" class="device-count" role="status"></p>
         <div class="device-grid" id="device-grid">
           <!-- Devices rendered here -->
@@ -674,6 +678,7 @@ class NablaPanel extends HTMLElement {
   }
 
   _setupEventListeners() {
+    this.shadowRoot.getElementById('discover-devices').onclick=()=>this._discoverDevices();
     this.shadowRoot.getElementById('device-search').oninput=e=>{this._search=e.target.value;this._renderDeviceList();};
     this.shadowRoot.getElementById('device-status').onchange=e=>{this._statusFilter=e.target.value;this._renderDeviceList();};
     this.shadowRoot.querySelectorAll('[data-tab]').forEach(button=>button.onclick=()=>this._selectTab(button.dataset.tab));
@@ -720,6 +725,33 @@ class NablaPanel extends HTMLElement {
     this.shadowRoot.getElementById("copy-yaml-btn").addEventListener("click", () => {
       this._copyYaml();
     });
+  }
+
+  async _discoverDevices() {
+    const button=this.shadowRoot.getElementById('discover-devices');
+    const section=this.shadowRoot.getElementById('discovery-results');
+    button.disabled=true;section.hidden=false;section.replaceChildren();
+    const status=document.createElement('p');status.setAttribute('role','status');
+    status.textContent='Buscando dispositivos Nabla entre los equipos ESPHome de Home Assistant…';section.append(status);
+    try {
+      const result=await this._hass.callWS({type:'nabla_control/discovery',operation:'scan'});
+      status.textContent=`${result.devices.length} compatibles encontrados entre ${result.known} equipos conocidos.${result.partial?' Búsqueda parcial; algunos equipos no respondieron a tiempo.':''}`;
+      for(const device of result.devices){
+        const row=document.createElement('div');row.className='discovery-row';
+        const label=document.createElement('span');label.textContent=`${device.name} · ${device.host}`;
+        const add=document.createElement('button');add.className='action-btn';
+        add.textContent=device.linked?'Vinculado':device.configured?'Vincular IP':'Añadir';add.disabled=device.linked;
+        add.onclick=async()=>{
+          add.disabled=true;
+          try{await this._hass.callWS({type:'nabla_control/discovery',operation:'adopt',source_entry_id:device.source_entry_id});
+            add.textContent='Vinculado';status.textContent='Guardado. La dirección seguirá los cambios que detecte ESPHome en Home Assistant.';await this._loadData();
+          }catch(e){add.disabled=false;status.textContent=e.message||'No se pudo añadir el dispositivo.';}
+        };
+        row.append(label,add);section.append(row);
+      }
+      const hint=document.createElement('p');hint.textContent='Vincular IP conserva las tarjetas existentes. Puedes desactivarlo en las opciones del dispositivo. Los equipos que Home Assistant aún no conoce se añaden manualmente.';section.append(hint);
+    }catch(e){status.textContent=e.message||'No se pudo realizar la búsqueda.';}
+    finally{button.disabled=false;}
   }
 
   _stopPreviews() {
