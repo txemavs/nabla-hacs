@@ -71,6 +71,9 @@ Install 0.7.0 and restart once to load the new code and replace the old HTTP
 route registration. Do **not** enable both integrations simultaneously.
 Confirm the Camera Cache entry exists and the images work, then remove the
 temporary import block. Existing entries win over imports on later boots.
+Remove any old camera-only Lovelace dashboard registration (for example
+“Cámaras ligeras”) after moving viewing to the Cameras tab. This does not
+remove camera entities or the compatibility image route.
 Keep the old source in a backup for rollback; it is no longer loaded.
 Device entries and firmware URLs remain valid.
 

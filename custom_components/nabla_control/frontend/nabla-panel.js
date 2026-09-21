@@ -16,7 +16,9 @@ class NablaPanel extends HTMLElement {
     this._pollIntervals = new Map();
     this._wsConnection = null;
     this._tab = "devices";
-    this._deviceView = "screens";
+    this._deviceView = "details";
+    this._search = "";
+    this._statusFilter = "all";
   }
 
   set hass(hass) {
@@ -527,6 +529,40 @@ class NablaPanel extends HTMLElement {
         .empty-state p {
           margin: 0;
         }
+
+        .container{max-width:none;padding:0 24px 24px}
+        .header{margin:0 -24px 16px;padding:12px 24px;background:var(--primary-color,#009cbe);color:var(--text-primary-color,#fff);border:0;justify-content:flex-start}
+        .header h1{font-size:20px;font-weight:500;color:inherit;margin-right:auto}
+        .header-icon{color:inherit}
+        .header .refresh-btn{background:transparent;color:inherit;text-decoration:none}
+        .tabs{gap:0;border-bottom:1px solid var(--divider-color);margin-bottom:20px}
+        .tabs button{border:0;border-radius:0;background:transparent;border-bottom:2px solid transparent}
+        .tabs button[aria-selected="true"]{border-bottom-color:var(--primary-color)}
+        .device-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+        .device-search{display:flex;align-items:center;gap:8px;border:1px solid var(--divider-color);border-radius:5px;background:var(--card-background-color);padding:0 12px;flex:1;max-width:460px;min-width:220px}
+        .device-search:focus-within{outline:2px solid var(--primary-color);outline-offset:-1px}
+        .device-search input{border:0;outline:0;padding:11px 0;width:100%;font:inherit;background:transparent;color:var(--primary-text-color)}
+        .device-toolbar .view-toggle{margin:0;gap:0}
+        .view-toggle button{padding:10px;border-radius:0;font-size:14px}
+        .view-toggle button:first-child{border-radius:5px 0 0 5px}
+        .view-toggle button:last-child{border-radius:0 5px 5px 0}
+        .view-toggle button[aria-pressed="true"]{background:var(--primary-color);color:var(--text-primary-color,#fff)}
+        .status-filter{font-size:13px;color:var(--secondary-text-color)}
+        .status-filter select{font:inherit;padding:10px;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:5px}
+        .add-device{margin-left:auto;text-decoration:none}
+        .device-count{font-size:13px;color:var(--secondary-text-color);margin:14px 0}
+        .device-grid.details{display:block;overflow-x:auto;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color)}
+        .device-table{border-collapse:collapse;width:100%;font-size:14px;text-align:left;white-space:nowrap}
+        .device-table th{font-weight:500;color:var(--secondary-text-color);background:var(--secondary-background-color);padding:14px 16px}
+        .device-table td{padding:14px 16px;border-top:1px solid var(--divider-color)}
+        .device-table tbody tr:hover{background:var(--secondary-background-color)}
+        .device-table .device-name{font-weight:500;font-size:14px}
+        .device-table .row-actions{display:flex;gap:6px}
+        .device-table .action-btn{flex:none;padding:7px 10px;font-size:13px}
+        .device-table .device-status{font-size:12px}
+        .device-table .online{color:var(--success-color,#2e7d32);background:transparent}
+        .device-table .offline{color:var(--error-color,#db4437);background:transparent}
+        @media(max-width:600px){.container{padding:0 12px 12px}.header{margin-left:-12px;margin-right:-12px;padding:12px}.device-search{max-width:none;flex-basis:100%}.add-device{margin-left:0}.device-table th,.device-table td{padding:12px}.header h1{font-size:18px}}
       </style>
 
       <div class="container">
@@ -550,9 +586,16 @@ class NablaPanel extends HTMLElement {
         <section id="cameras-panel" role="tabpanel" aria-labelledby="tab-cameras" hidden><nabla-cameras></nabla-cameras></section>
         <section id="mqtt-panel" role="tabpanel" aria-labelledby="tab-mqtt" hidden><nabla-mqtt-log></nabla-mqtt-log></section>
         <section id="devices-panel" role="tabpanel" aria-labelledby="tab-devices">
-        <div class="view-toggle" aria-label="Vista de dispositivos">
-          <button data-view="screens" aria-pressed="true">Pantallas</button><button data-view="details" aria-pressed="false">Detalles</button>
+        <div class="device-toolbar">
+          <label class="device-search"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M9.5 3a6.5 6.5 0 1 0 4 11.6L19.9 21l1.4-1.4-6.4-6.4A6.5 6.5 0 0 0 9.5 3m0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9"/></svg><input id="device-search" type="search" placeholder="Buscar dispositivos…" aria-label="Buscar dispositivos"></label>
+          <div class="view-toggle" aria-label="Vista de dispositivos">
+            <button data-view="screens" aria-pressed="false" title="Pantallas"><span aria-hidden="true">▦</span> Pantallas</button>
+            <button data-view="details" aria-pressed="true" title="Tabla de detalles"><span aria-hidden="true">☷</span> Detalles</button>
+          </div>
+          <label class="status-filter">Estado <select id="device-status"><option value="all">Todos</option><option value="online">Conectados</option><option value="offline">Desconectados</option></select></label>
+          <a class="refresh-btn add-device" href="/config/integrations/integration/nabla_control"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg> Añadir dispositivo</a>
         </div>
+        <p id="device-count" class="device-count" role="status"></p>
         <div class="device-grid" id="device-grid">
           <!-- Devices rendered here -->
         </div>
@@ -631,6 +674,8 @@ class NablaPanel extends HTMLElement {
   }
 
   _setupEventListeners() {
+    this.shadowRoot.getElementById('device-search').oninput=e=>{this._search=e.target.value;this._renderDeviceList();};
+    this.shadowRoot.getElementById('device-status').onchange=e=>{this._statusFilter=e.target.value;this._renderDeviceList();};
     this.shadowRoot.querySelectorAll('[data-tab]').forEach(button=>button.onclick=()=>this._selectTab(button.dataset.tab));
     this.shadowRoot.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>{
       this._deviceView=button.dataset.view;
@@ -701,6 +746,14 @@ class NablaPanel extends HTMLElement {
     const grid = this.shadowRoot.getElementById("device-grid");
     grid.classList.toggle("details",this._deviceView==="details");
     const previews=this._tab==="devices"&&this._deviceView==="screens";
+    const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const query=normalize(this._search).trim();
+    const devices=this._devices.filter(device=>{
+      const matches=normalize([device.name,device.host,device.device_id,device.kind].join(' ')).includes(query);
+      return matches&&(this._statusFilter==='all'||Boolean(device.available)===(this._statusFilter==='online'));
+    }).sort((a,b)=>String(a.name||a.device_id).localeCompare(String(b.name||b.device_id)));
+    this.shadowRoot.getElementById('device-count').textContent=`${devices.length} de ${this._devices.length} dispositivos`;
+    if(this._devices.length && !devices.length){grid.innerHTML='<div class="empty-state"><h3>No hay coincidencias</h3><p>Prueba con otro nombre, dirección o estado.</p></div>';return;}
 
     if (this._devices.length === 0) {
       grid.innerHTML = `
@@ -713,7 +766,7 @@ class NablaPanel extends HTMLElement {
       return;
     }
 
-    grid.innerHTML = this._devices
+    const content = devices
       .map(
         (device) => {
           const isWeb = device.kind === "web";
@@ -762,21 +815,29 @@ class NablaPanel extends HTMLElement {
           const actions = isWeb
             ? `<button class="action-btn open-nabla" data-action="open" data-device-id="${device.device_id}" data-open-url="${this._escapeHtml(openUrl)}">
             <svg viewBox="0 0 24 24"><path fill="currentColor" d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"/></svg>
-            Open Nabla
+            Abrir
           </button>
           <button class="action-btn" data-action="live" data-device-id="${device.device_id}">
             <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/></svg>
-            Live View
+            Ver
           </button>`
             : `<button class="action-btn" data-action="live" data-device-id="${device.device_id}">
             <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/></svg>
-            Live View
+            Ver
           </button>
           <button class="action-btn primary" data-action="assign" data-device-id="${device.device_id}">
             <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
-            Add to Dashboard
+            Añadir al panel
           </button>`;
 
+          if(this._deviceView==='details'){
+            const text=value=>this._escapeHtml(String(value??'—'));
+            return `<tr><td class="device-name">${text(device.name||device.device_id)}</td>
+              <td><span class="device-status ${device.available?'online':'offline'}">● ${device.available?'Conectado':'Desconectado'}</span></td>
+              <td>${text(device.host)}</td><td>${isWeb?'Web':'Pantalla'}</td>
+              <td>${!isWeb&&device.width&&device.height?text(device.width)+' × '+text(device.height):'—'}</td>
+              <td>${device.has_input?'Sí':'No'}</td><td><div class="row-actions">${actions}</div></td></tr>`;
+          }
           return `
       <div class="device-card" data-device-id="${device.device_id}">
         <div class="device-header">
@@ -822,6 +883,11 @@ class NablaPanel extends HTMLElement {
         }
       )
       .join("");
+
+    if(this._deviceView==='details')grid.innerHTML=`<table class="device-table" aria-label="Detalles de dispositivos"><thead><tr>
+      <th scope="col">Dispositivo</th><th scope="col">Estado</th><th scope="col">Dirección</th><th scope="col">Tipo</th><th scope="col">Resolución</th><th scope="col">Control</th><th scope="col">Acciones</th>
+      </tr></thead><tbody>${content}</tbody></table>`;
+    else grid.innerHTML=content;
 
     // Add click handlers for actions
     grid.querySelectorAll(".action-btn").forEach((btn) => {
