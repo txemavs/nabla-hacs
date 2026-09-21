@@ -10,7 +10,7 @@ import time
 import aiohttp
 import voluptuous as vol
 
-from homeassistant.components import panel_custom
+from homeassistant.components import panel_custom, frontend
 from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -385,7 +385,7 @@ class DeviceState:
 
 
 PANEL_TITLE = "Nabla Control"
-PANEL_ICON = "mdi:monitor"
+PANEL_ICON = "nabla:logo"
 PANEL_URL_PATH = "nabla-control"
 PANEL_FRONTEND_URL = f"/{DOMAIN}_panel"
 
@@ -398,13 +398,15 @@ async def async_register_panel(hass: HomeAssistant) -> None:
         StaticPathConfig(PANEL_FRONTEND_URL, frontend_path, cache_headers=False)
     ])
 
+    frontend.add_extra_js_url(hass, f"{PANEL_FRONTEND_URL}/nabla-icons.js?v=1")
+
     await panel_custom.async_register_panel(
         hass,
         webcomponent_name="nabla-panel",
         frontend_url_path=PANEL_URL_PATH,
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
-        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921mqtt1",
+        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921access1",
         embed_iframe=False,
         require_admin=False,
     )
