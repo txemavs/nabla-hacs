@@ -58,7 +58,7 @@ a deleted device again on the next boot. Existing entries are not overwritten
 by old YAML values.
 
 New devices receive a persistent local ID. Automatic hardware identity,
-discovery across subnets, MQTT announcements/logging and remote touch are next
+discovery across subnets, MQTT announcements and remote touch are next
 phases; this release supports manual address updates, not roaming discovery.
 
 ### Options
@@ -126,3 +126,38 @@ Service domain: `nabla_control` (e.g. `nabla_control.send_action`).
 ## License
 
 MIT
+
+## Optional MQTT monitor (0.6)
+
+Open **MQTT · visor opcional** in the Nabla Control panel. An administrator can
+activate it, enter up to eight MQTT topic filters and select 50–1000 retained
+history rows (200 by default). This uses the existing Home Assistant MQTT broker;
+there is no additional broker login or dependency when the monitor is disabled.
+Configure the MQTT integration first if it is not already available.
+
+- Disabled by default; no default topic subscription.
+- Read-only: no publish API, command replay or control messages.
+- Filters support MQTT `+` and terminal `#`; for example `nabla/ha/+/ui/#`.
+- Timestamp is receive time in UTC, not proof of when a command executed.
+- Retained messages are marked separately. A command is not an acknowledgement.
+- Message contents stay in memory, not Recorder, files or HA logs. Only settings
+  persist in HA storage. Restart, disabling or applying settings clears history.
+- Each payload is limited to 2048 bytes (binary UTF-8 errors are replaced), topic
+  display to 256 characters, and reception to 100 messages per second. The panel
+  reports dropped messages and marks truncated payloads. Overlapping topic
+  filters can produce duplicate entries; prefer disjoint filters.
+- Pause freezes only this browser view; recording continues. Closing the section
+  stops browser polling but leaves the explicitly enabled recording running.
+- Administrators alone can configure, inspect or clear this log.
+
+Installation of new Python integration code needs one HA restart. Enabling,
+disabling and changing MQTT settings afterwards does not. Use Apply again if
+MQTT was unavailable during startup; ordinary broker reconnects use HA MQTT's
+existing subscriptions.
+
+## Verification
+
+Run `python3 -m unittest discover -s tests -v`. The tests exercise production
+lifecycle and MQTT code through an isolated HA boundary; they are not a full
+Home Assistant/frontend suite. Keep physical, runtime and owner verification
+separate from unit test results.

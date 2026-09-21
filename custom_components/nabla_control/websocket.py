@@ -17,6 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 def async_register_websocket_handlers(hass: HomeAssistant) -> None:
     """Register WebSocket handlers for the Nabla Control panel."""
     websocket_api.async_register_command(hass, websocket_get_devices)
+    websocket_api.async_register_command(hass, websocket_mqtt_log)
 
 
 @websocket_api.websocket_command(
@@ -55,3 +56,23 @@ def websocket_get_devices(
         })
 
     connection.send_result(msg["id"], devices)
+
+
+@websocket_api.websocket_command({vol.Required('type'): 'nabla_control/mqtt_log',
+    vol.Optional('operation', default='get'): vol.In(['get', 'configure', 'clear']),
+    vol.Optional('enabled', default=False): bool,
+    vol.Optional('topics', default=[]): [str],
+    vol.Optional('limit', default=200): vol.All(int, vol.Range(min=50, max=1000))})
+@websocket_api.async_response
+async def websocket_mqtt_log(hass, connection, msg):
+    """Only administrators may inspect arbitrary MQTT traffic or change filters."""
+    connection.require_admin()
+    monitor = hass.data[DOMAIN]['mqtt_log']
+    try:
+        if msg['operation'] == 'configure':
+            await monitor.configure(msg)
+        elif msg['operation'] == 'clear':
+            monitor.buffer.clear()
+        connection.send_result(msg['id'], monitor.snapshot())
+    except (ValueError, RuntimeError) as exc:
+        connection.send_error(msg['id'], 'mqtt_log_error', str(exc))

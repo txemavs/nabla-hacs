@@ -18,6 +18,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from .mqtt_log import MqttLog
 from .identity import http_host
 from .frame import decode_frame, image_to_png_bytes, infer_profile_from_size
 from .websocket import async_register_websocket_handlers
@@ -403,7 +404,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
         frontend_url_path=PANEL_URL_PATH,
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
-        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921dynamic1",
+        module_url=f"{PANEL_FRONTEND_URL}/nabla-panel.js?v=20260921mqtt1",
         embed_iframe=False,
         require_admin=False,
     )
@@ -415,6 +416,9 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the Nabla Control integration (domain nabla_control)."""
     devices: dict[str, DeviceState] = {}
     hass.data[DOMAIN] = {"devices": devices, "entries": {}}
+    monitor = MqttLog(hass)
+    hass.data[DOMAIN]["mqtt_log"] = monitor
+    await monitor.restore()
 
     hass.http.register_view(FrameImageView(devices))
 
@@ -450,6 +454,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         ))
 
     async def stop(_event):
+        monitor.stop()
         for device in list(devices.values()):
             await device.stop_polling()
 
