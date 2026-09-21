@@ -20,38 +20,13 @@ ACTIONS = [
 ]
 
 
-async def async_setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    """Set up Nabla Control button entities."""
-    devices = hass.data[DOMAIN]["devices"]
-
-    entities = []
-    for device_id, device in devices.items():
-        if await _wait_for_capabilities(device):
-            if device.has_input:
-                for action, name, icon in ACTIONS:
-                    entities.append(NablaControlButton(device, action, name, icon))
-            else:
-                _LOGGER.info("Device %s has no input, skipping buttons", device.name)
-
-    async_add_entities(entities, update_before_add=False)
-
-
-async def _wait_for_capabilities(device, timeout: float = 10.0) -> bool:
-    """Wait for device capabilities to be fetched."""
-    import asyncio
-
-    for _ in range(int(timeout / 0.5)):
-        if device.capabilities is not None:
-            return True
-        await asyncio.sleep(0.5)
-
-    _LOGGER.warning("Timeout waiting for capabilities from %s", device.name)
-    return False
+async def async_setup_entry(hass, entry, async_add_entities) -> None:
+    """Create controls immediately; availability follows negotiated capability."""
+    device = hass.data[DOMAIN]["entries"][entry.entry_id]
+    async_add_entities([
+        NablaControlButton(device, action, name, icon)
+        for action, name, icon in ACTIONS
+    ])
 
 
 class NablaControlButton(ButtonEntity):
@@ -63,6 +38,11 @@ class NablaControlButton(ButtonEntity):
         self._attr_name = f"{device.name} {action_name}"
         self._attr_unique_id = f"nabla_control_{device.device_id}_{action}"
         self._attr_icon = icon
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, device.device_id)},
+            "name": device.name,
+            "manufacturer": "Nabla",
+        }
 
     @property
     def available(self) -> bool:

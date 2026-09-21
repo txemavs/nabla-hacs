@@ -1,0 +1,43 @@
+{
+  "title": "Nabla Control",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Añadir dispositivo Nabla",
+        "description": "Introduce la dirección de un dispositivo Nabla. No requiere reiniciar Home Assistant.",
+        "data": {
+          "host": "Nombre de host o dirección IP",
+          "name": "Nombre",
+          "kind": "Tipo de dispositivo",
+          "poll_interval": "Intervalo de actualización (segundos)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No se puede conectar con un dispositivo Nabla compatible.",
+      "invalid_host": "Introduce un nombre de host o IP sin URL ni puerto."
+    },
+    "abort": {
+      "already_configured": "Este dispositivo ya está configurado."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ajustes del dispositivo",
+        "description": "Cambia la dirección conservando las tarjetas existentes.",
+        "data": {
+          "host": "Nombre de host o dirección IP",
+          "name": "Nombre",
+          "kind": "Tipo de dispositivo",
+          "poll_interval": "Intervalo de actualización (segundos)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No se puede conectar con un dispositivo Nabla compatible.",
+      "invalid_host": "Introduce un nombre de host o IP sin URL ni puerto.",
+      "already_configured": "Esta dirección pertenece a otro dispositivo."
+    }
+  }
+}

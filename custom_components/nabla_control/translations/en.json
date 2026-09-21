@@ -1,0 +1,43 @@
+{
+  "title": "Nabla Control",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Nabla device",
+        "description": "Enter a reachable Nabla web or mirror device. No Home Assistant restart is needed.",
+        "data": {
+          "host": "Host or IP address",
+          "name": "Name",
+          "kind": "Device type",
+          "poll_interval": "Refresh interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach a compatible Nabla device.",
+      "invalid_host": "Enter a hostname or IP address without a URL or port."
+    },
+    "abort": {
+      "already_configured": "This device is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Device settings",
+        "description": "Change the address without changing existing dashboard references.",
+        "data": {
+          "host": "Host or IP address",
+          "name": "Name",
+          "kind": "Device type",
+          "poll_interval": "Refresh interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach a compatible Nabla device.",
+      "invalid_host": "Invalid hostname or IP address.",
+      "already_configured": "This address belongs to another entry."
+    }
+  }
+}

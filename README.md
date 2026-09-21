@@ -40,17 +40,26 @@ Copy `custom_components/nabla_control/` into your Home Assistant `config/custom_
 
 ## Configuration
 
-```yaml
-nabla_control:
-  devices:
-    - host: "10.10.10.204"
-      name: "Kit1"
-      poll_interval: 1.0
-    - host: "10.10.10.251"
-      name: "Dashcam Web"
-      kind: web
-      poll_interval: 5.0
-```
+In Home Assistant, open **Settings → Devices & services → Add integration →
+Nabla Control**. Enter the device hostname/IP, name, type and refresh interval.
+The panel's **Manage devices** link opens the integration settings. New entries,
+removals and option changes do not restart Home Assistant.
+
+Use an entry's **Configure** action to change its address or refresh interval.
+Only that entry reloads. Dashboard IDs stay stable when its IP changes.
+
+### Upgrade from YAML (0.4.x)
+
+The first installation of this code requires a Home Assistant restart. Existing
+`nabla_control: devices:` YAML is imported automatically, including offline
+units. Imported devices retain their previous card/button IDs. Confirm the
+entries appear, then remove that YAML section: leaving it in place will import
+a deleted device again on the next boot. Existing entries are not overwritten
+by old YAML values.
+
+New devices receive a persistent local ID. Automatic hardware identity,
+discovery across subnets, MQTT announcements/logging and remote touch are next
+phases; this release supports manual address updates, not roaming discovery.
 
 ### Options
 
