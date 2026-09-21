@@ -24,7 +24,7 @@ devices, encoder actions, and the sidebar panel.
 - **Nabla web UI** — devices that serve an HTML Nabla UI (`/nabla/state`), with an **Open Nabla** link
 - **Cameras** — when a web device reports `camera_port`, the panel shows a live MJPEG preview
 
-The YAML / Python domain stays `nabla_display` for compatibility; the product name is **Nabla Control**. De refilón, it is also a **Home Assistant Control System** for these devices.
+The YAML / Python domain stays `nabla_display` for compatibility; the product name is **Nabla Control**.
 
 ---
 
