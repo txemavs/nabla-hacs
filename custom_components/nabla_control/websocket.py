@@ -19,6 +19,7 @@ def async_register_websocket_handlers(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, websocket_get_devices)
     websocket_api.async_register_command(hass, websocket_mqtt_log)
     websocket_api.async_register_command(hass, websocket_cameras)
+    websocket_api.async_register_command(hass, websocket_discovery)
 
 
 @websocket_api.websocket_command(
@@ -92,3 +93,18 @@ def websocket_cameras(hass, connection, msg):
             "interval": cache.interval, "generations": cache.generations,
             "failures": cache.failures})
     connection.send_result(msg["id"], result)
+
+
+@websocket_api.websocket_command({vol.Required("type"): "nabla_control/discovery",
+    vol.Optional("operation", default="scan"): vol.In(["scan", "adopt"]),
+    vol.Optional("source_entry_id"): str})
+@websocket_api.async_response
+async def websocket_discovery(hass, connection, msg):
+    """Administrators explicitly add or bind entries; scans are read-only."""
+    connection.require_admin()
+    manager = hass.data[DOMAIN]["discovery"]
+    try:
+        result = await manager.adopt(msg.get("source_entry_id")) if msg["operation"] == "adopt" else await manager.scan()
+        connection.send_result(msg["id"], result)
+    except ValueError as exc:
+        connection.send_error(msg["id"], "discovery_error", str(exc))
